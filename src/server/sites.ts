@@ -1,21 +1,42 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, inArray } from 'drizzle-orm'
 import { db } from '../db'
-import { sites } from '../db/schema'
+import { sites, checks } from '../db/schema'
 import { requireUser } from './auth'
 
 export const listSites = createServerFn({ method: 'GET' }).handler(async () => {
   const user = await requireUser()
-  return db
+
+  // List the user's sites
+  const rows = await db
     .select()
     .from(sites)
     .where(eq(sites.userId, user.id))
     .orderBy(desc(sites.createdAt))
+
+  // Keep sites query, and bail out early if it’s empty
+  if (rows.length === 0) return [];
+
+  // CWV data for sites, newest first
+  const allChecks = await db
+    .select()
+    .from(checks)
+    .where(inArray(checks.siteId, rows.map((r) => r.id)))
+    .orderBy(desc(checks.createdAt))
+
+  // Keep only the first (newest) check we see for each site
+  const latestBySite = new Map<number, (typeof allChecks)[number]>()
+  for (const c of allChecks) {
+    if (!latestBySite.has(c.siteId)) latestBySite.set(c.siteId, c)
+  }
+
+  // Sites with their latest check attached (null if never checked)
+  return rows.map((r) => ({ ...r, latest: latestBySite.get(r.id) ?? null }))
 })
 
 export const addSite = createServerFn({ method: 'POST' })
-  .inputValidator(z.object({ url: z.string().url() }))
+  .validator(z.object({ url: z.string().url() }))
   .handler(async ({ data }) => {
     const user = await requireUser()
     const url = new URL(data.url).toString()
