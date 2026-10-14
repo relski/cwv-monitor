@@ -1,8 +1,9 @@
-import { createFileRoute, useRouter } from '@tanstack/react-router'
-import { useState } from 'react'
-import type { checks } from '../db/schema'
-import { addSite, listSites } from '../server/sites'
-import { runCheck } from '../server/checks'
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useState } from "react";
+import type { checks } from "../db/schema";
+import { addSite, listSites } from "../server/sites";
+import { runCheck } from "../server/checks";
+import { ms, cls } from "#/lib/format";
 
 type Check = typeof checks.$inferSelect
 
@@ -10,10 +11,6 @@ export const Route = createFileRoute('/')({
   loader: () => listSites(),
   component: Home,
 })
-
-// null -> '–' (a CLS of 0 is a perfect score, so don't use a falsy check)
-const ms = (v: number | null) => (v === null ? '–' : `${Math.round(v)} ms`)
-const cls = (v: number | null) => (v === null ? '–' : v.toFixed(3))
 
 function SiteResult({ latest }: { latest: Check }) {
   let fieldText: string
@@ -71,7 +68,7 @@ function Home() {
   }
 
   return (
-    <main style={{ maxWidth: 640, margin: '40px auto', padding: 16 }}>
+    <main style={{ maxWidth: 1200, margin: '40px auto', padding: 16 }}>
       <h1>CWV Monitor</h1>
       <form onSubmit={onSubmit}>
         <input

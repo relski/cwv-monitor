@@ -15,3 +15,18 @@ body {
   margin: 0;
 }
 
+button{
+  background-color: #2563eb; /* Vibrant primary color */
+  color: #ffffff;            /* White text */
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 5px 10px;        /* Spacing inside the button */
+  border: none;              /* Remove default browser border */
+  border-radius: 6px;        /* Slightly rounded corners */
+  cursor: pointer;           /* Hand cursor on hover */
+  transition: background-color 0.2s ease;
+}
+
+button:hover {
+  background-color: #1d4ed8; /* Darken on hover */
+}
