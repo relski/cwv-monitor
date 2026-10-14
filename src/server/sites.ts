@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { z } from 'zod'
-import { desc, eq, inArray } from 'drizzle-orm'
+import { and, desc, eq, inArray } from 'drizzle-orm'
 import { db } from '../db'
 import { sites, checks } from '../db/schema'
 import { requireUser } from './auth'
@@ -43,3 +43,30 @@ export const addSite = createServerFn({ method: 'POST' })
     await db.insert(sites).values({ userId: user.id, url }).onConflictDoNothing()
     return { ok: true }
   })
+
+  export const getSiteHistory = createServerFn({ method: 'GET' })
+   .validator(z.object({ siteId: z.number() }))
+   .handler(async ({ data }) => {
+      const user = await requireUser();
+      const [site] = await db
+        .select()
+        .from(sites)
+        .where(
+          and(
+            eq(sites.id, data.siteId), 
+            eq(sites.userId, user.id)
+          )
+        )
+        .limit(1)
+      
+      if (!site) throw new Error('Site not found');
+      
+      const history = await db
+        .select()
+        .from(checks)
+        .where(eq(checks.siteId, site.id))
+        .orderBy(desc(checks.createdAt))
+        .limit(50)
+      
+      return { site, history }
+   })
