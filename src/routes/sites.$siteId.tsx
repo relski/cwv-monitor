@@ -17,7 +17,7 @@ const sourceLabels = {
 } as const
 
 function HistoryTable({ history }: { history: Check[] }) {
-  const cell = { padding: '6px 10px', textAlign: 'left' } as const
+  const cell = { padding: '6px 10px', textAlign: 'left' } as const;
 
   return (
     <table style={{ borderCollapse: 'collapse', width: '100%' }}>

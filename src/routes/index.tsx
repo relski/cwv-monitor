@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import type { checks } from "../db/schema";
 import { addSite, listSites } from "../server/sites";
@@ -84,7 +84,9 @@ function Home() {
       <ul style={{ listStyle: 'none', padding: 0 }}>
         {sites.map((s) => (
           <li key={s.id} style={{ margin: '20px 0' }}>
-            <strong>{s.url}</strong>{' '}
+            <Link to="/sites/$siteId" params={{ siteId: String(s.id) }}>
+              <strong>{s.url}</strong>
+            </Link>
             <button onClick={() => onCheck(s.id)} disabled={running === s.id}>
               {running === s.id ? 'Checking… (can take ~30s)' : 'Check now'}
             </button>
