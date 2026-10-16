@@ -4,6 +4,7 @@ import type { checks } from "../db/schema";
 import { addSite, listSites } from "../server/sites";
 import { runCheck } from "../server/checks";
 import { ms, cls } from "#/lib/format";
+import { Button } from "#/components/ui/button";
 
 type Check = typeof checks.$inferSelect
 
@@ -77,7 +78,7 @@ function Home() {
           placeholder="https://example.com"
           style={{ width: '70%' }}
         />
-        <button type="submit">Add</button>
+        <Button type="submit">Add</Button>
       </form>
       {error && <p style={{ color: 'crimson' }}>{error}</p>}
 
@@ -87,9 +88,9 @@ function Home() {
             <Link to="/sites/$siteId" params={{ siteId: String(s.id) }}>
               <strong>{s.url}</strong>
             </Link>
-            <button onClick={() => onCheck(s.id)} disabled={running === s.id}>
+            <Button onClick={() => onCheck(s.id)} disabled={running === s.id}>
               {running === s.id ? 'Checking… (can take ~30s)' : 'Check now'}
-            </button>
+            </Button>
             {s.latest ? (
               <SiteResult latest={s.latest} />
             ) : (

@@ -2,6 +2,14 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import type { checks } from '#/db/schema'
 import { getSiteHistory } from '#/server/sites'
 import { ms, cls } from '#/lib/format'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 type Check = typeof checks.$inferSelect
 
@@ -20,34 +28,34 @@ function HistoryTable({ history }: { history: Check[] }) {
   const cell = { padding: '6px 10px', textAlign: 'left' } as const;
 
   return (
-    <table style={{ borderCollapse: 'collapse', width: '100%' }}>
-      <thead>
-        <tr>
-          <th style={cell}>Checked</th>
-          <th style={cell}>Field LCP</th>
-          <th style={cell}>Field INP</th>
-          <th style={cell}>Field CLS</th>
-          <th style={cell}>Lab score</th>
-          <th style={cell}>Source</th>
-        </tr>
-      </thead>
-      <tbody>
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead style={cell}>Checked</TableHead>
+          <TableHead style={cell}>Field LCP</TableHead>
+          <TableHead style={cell}>Field INP</TableHead>
+          <TableHead style={cell}>Field CLS</TableHead>
+          <TableHead style={cell}>Lab score</TableHead>
+          <TableHead style={cell}>Source</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {history.map((c) => (
-          <tr key={c.id}>
-            <td style={cell}>{new Date(c.createdAt).toLocaleString()}</td>
-            <td style={cell}>{ms(c.fieldLcp)}</td>
-            <td style={cell}>{ms(c.fieldInp)}</td>
-            <td style={cell}>{cls(c.fieldCls)}</td>
-            <td style={cell}>{c.perfScore ?? '–'}</td>
-            <td style={cell}>
+          <TableRow key={c.id}>
+            <TableCell style={cell}>{new Date(c.createdAt).toLocaleString()}</TableCell>
+            <TableCell style={cell}>{ms(c.fieldLcp)}</TableCell>
+            <TableCell style={cell}>{ms(c.fieldInp)}</TableCell>
+            <TableCell style={cell}>{cls(c.fieldCls)}</TableCell>
+            <TableCell style={cell}>{c.perfScore ?? '–'}</TableCell>
+            <TableCell style={cell}>
               {c.fieldSource
                 ? sourceLabels[c.fieldSource as keyof typeof sourceLabels]
                 : '–'}
-            </td>
-          </tr>
+            </TableCell>
+          </TableRow>
         ))}
-      </tbody>
-    </table>
+      </TableBody>
+    </Table>
   )
 }
 
