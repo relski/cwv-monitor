@@ -76,7 +76,7 @@ function Home() {
 
 	return (
 		<main style={{ maxWidth: 1200, margin: "40px auto", padding: 16 }}>
-			<h1 className="text-2xl">CWV Monitor</h1>
+			<h1 className="text-2xl">Core Web Vitals Monitor</h1>
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();
