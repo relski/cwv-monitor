@@ -1,13 +1,13 @@
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import type { checks } from "#/db/schema";
 import { cls, ms } from "#/lib/format";
+import { runCheck } from "#/server/checks";
+import { addSite, listSites } from "#/server/sites";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import type { checks } from "../db/schema";
-import { runCheck } from "../server/checks";
-import { addSite, listSites } from "../server/sites";
 
 type Check = typeof checks.$inferSelect;
 
@@ -110,8 +110,8 @@ function Home() {
 								<Button type="submit">Add</Button>
 								{field.state.meta.errors.length > 0 && (
 									<FieldError
-										errors={field.state.meta.errors.map((error) => ({
-											message: String(error),
+										errors={field.state.meta.errors.map((err) => ({
+											message: String(err),
 										}))}
 									/>
 								)}
@@ -140,7 +140,7 @@ function Home() {
 							disabled={running === s.id}
 							className="flex-1 max-w-30"
 						>
-							{running === s.id ? "Checking… (can take ~30s)" : "Check now"}
+							{running === s.id ? "Checking…" : "Check now"}
 						</Button>
 						{s.latest ? (
 							<SiteResult latest={s.latest} />
