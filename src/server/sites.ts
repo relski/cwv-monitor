@@ -3,6 +3,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "#/db";
 import { checks, sites } from "#/db/schema";
+import { fetchCruxHistory } from "#/lib/crux";
 import { requireUser } from "./auth";
 
 export const listSites = createServerFn({ method: "GET" }).handler(async () => {
@@ -71,5 +72,7 @@ export const getSiteHistory = createServerFn({ method: "GET" })
 			.orderBy(desc(checks.createdAt))
 			.limit(50);
 
-		return { site, history };
+		const cruxHistory = await fetchCruxHistory(site.url);
+
+		return { site, history, cruxHistory };
 	});
