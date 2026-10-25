@@ -5,6 +5,7 @@ import { db } from "#/db";
 import { checks, sites } from "#/db/schema";
 import { fetchCruxHistory } from "#/lib/crux";
 import { requireUser } from "./auth";
+import { strategySchema } from "#/lib/strategy";
 
 export const listSites = createServerFn({ method: "GET" }).handler(async () => {
 	const user = await requireUser();
@@ -54,13 +55,18 @@ export const addSite = createServerFn({ method: "POST" })
 	});
 
 export const getSiteHistory = createServerFn({ method: "GET" })
-	.validator(z.object({ siteId: z.number() }))
+	.validator(z.object({ siteId: z.number(), strategy: strategySchema }))
 	.handler(async ({ data }) => {
 		const user = await requireUser();
 		const [site] = await db
 			.select()
 			.from(sites)
-			.where(and(eq(sites.id, data.siteId), eq(sites.userId, user.id)))
+			.where(
+				and(
+					eq(sites.id, data.siteId), 
+					eq(sites.userId, user.id)
+				)
+			)
 			.limit(1);
 
 		if (!site) throw new Error("Site not found");
@@ -68,11 +74,11 @@ export const getSiteHistory = createServerFn({ method: "GET" })
 		const history = await db
 			.select()
 			.from(checks)
-			.where(eq(checks.siteId, site.id))
+			.where(and(eq(checks.siteId, site.id),eq(checks.strategy, data.strategy)))
 			.orderBy(desc(checks.createdAt))
 			.limit(50);
 
-		const cruxHistory = await fetchCruxHistory(site.url);
+		const cruxHistory = await fetchCruxHistory(site.url, data.strategy);
 
 		return { site, history, cruxHistory };
 	});

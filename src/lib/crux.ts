@@ -1,4 +1,5 @@
 import { requireEnv } from "./env";
+import { CRUX_FORM_FACTOR, type Strategy } from "./strategy";
 
 export type CruxResult = {
 	source: "url" | "origin";
@@ -19,13 +20,13 @@ export type CruxHistoryResult = {
 const toNum = (v: unknown): number | null => (v == null ? null : Number(v));
 
 // One CrUX request. Returns the JSON, or null when Google has no data (404).
-const query = async (body: Record<string, string>) => {
+const query = async (body: Record<string, string>, strategy: Strategy) => {
 	const res = await fetch(
 		`https://chromeuxreport.googleapis.com/v1/records:queryRecord?key=${requireEnv("GOOGLE_API_KEY")}`,
 		{
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ ...body, formFactor: "PHONE" }),
+			body: JSON.stringify({ ...body, formFactor: CRUX_FORM_FACTOR[strategy] }),
 		},
 	);
 
@@ -36,7 +37,7 @@ const query = async (body: Record<string, string>) => {
 };
 
 // CrUX query for historical record fetch
-const queryHistory = async (body: Record<string, string>) => {
+const queryHistory = async (body: Record<string, string>, strategy: Strategy) => {
 	const res = await fetch(
 		`https://chromeuxreport.googleapis.com/v1/records:queryHistoryRecord?key=${requireEnv("GOOGLE_API_KEY")}`,
 		{
@@ -44,7 +45,7 @@ const queryHistory = async (body: Record<string, string>) => {
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				...body,
-				formFactor: "PHONE",
+				formFactor: CRUX_FORM_FACTOR[strategy],
 				collectionPeriodCount: 12,
 			}),
 		},
@@ -86,21 +87,21 @@ const parseHistory = (
 };
 
 // Try the exact page first, then the whole site, otherwise no data.
-export const fetchCrux = async (url: string): Promise<CruxResult | null> => {
-	const byUrl = await query({ url });
+export const fetchCrux = async (url: string, strategy: Strategy): Promise<CruxResult | null> => {
+	const byUrl = await query({ url }, strategy);
 	if (byUrl) return parse(byUrl, "url");
 
-	const byOrigin = await query({ origin: new URL(url).origin });
+	const byOrigin = await query({ origin: new URL(url).origin }, strategy);
 	return byOrigin ? parse(byOrigin, "origin") : null;
 };
 
 // Collect the history data
 export const fetchCruxHistory = async (
-	url: string,
+	url: string, strategy: Strategy
 ): Promise<CruxHistoryResult | null> => {
-	const byUrl = await queryHistory({ url });
+	const byUrl = await queryHistory({ url }, strategy);
 	if (byUrl) return parseHistory(byUrl, "url");
 
-	const byOrigin = await queryHistory({ origin: new URL(url).origin });
+	const byOrigin = await queryHistory({ origin: new URL(url).origin }, strategy);
 	return byOrigin ? parseHistory(byOrigin, "origin") : null;
 };

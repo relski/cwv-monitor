@@ -1,4 +1,5 @@
 import { requireEnv } from "./env";
+import type { Strategy } from "./strategy";
 
 export type PsiResult = {
 	lcp: number | null;
@@ -9,7 +10,7 @@ export type PsiResult = {
 
 export const fetchPsi = async (
 	url: string,
-	strategy: "mobile" | "desktop" = "mobile",
+	strategy: Strategy
 ): Promise<PsiResult> => {
 	const params = new URLSearchParams({
 		url,

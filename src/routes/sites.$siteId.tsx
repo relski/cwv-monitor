@@ -18,12 +18,25 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { DEFAULT_STRATEGY, strategySchema } from "#/lib/strategy";
+import { z } from "zod";
 
 type Check = typeof checks.$inferSelect;
 
 export const Route = createFileRoute("/sites/$siteId")({
-	loader: ({ params }) =>
-		getSiteHistory({ data: { siteId: Number(params.siteId) } }),
+	validateSearch: z.object({
+		strategy: strategySchema.catch(DEFAULT_STRATEGY),
+	}),
+	loaderDeps: ({ search }) => ({
+        strategy: search.strategy,
+    }),
+    loader: ({ params, deps }) =>
+        getSiteHistory({
+            data: {
+                siteId: Number(params.siteId),
+                strategy: deps.strategy,
+            },
+        }),
 	component: SitePage,
 });
 

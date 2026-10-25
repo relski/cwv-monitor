@@ -2,11 +2,11 @@ import { db } from "../db";
 import { checks } from "../db/schema";
 import { fetchCrux } from "./crux";
 import { fetchPsi } from "./psi";
+import type { Strategy } from "./strategy";
 
-export const performCheck = async (site: { id: number; url: string }) => {
-	const strategy = "mobile";
+export const performCheck = async (site: { id: number; url: string }, strategy: Strategy) => {
 	const [crux, psi] = await Promise.all([
-		fetchCrux(site.url),
+		fetchCrux(site.url, strategy),
 		fetchPsi(site.url, strategy),
 	]);
 	const [row] = await db

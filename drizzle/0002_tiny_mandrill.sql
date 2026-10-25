@@ -1,0 +1,1 @@
+CREATE INDEX "checks_site_strategy_created_idx" ON "checks" USING btree ("site_id","strategy","created_at");

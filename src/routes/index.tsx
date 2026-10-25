@@ -8,8 +8,12 @@ import { addSite, listSites } from "#/server/sites";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Label } from "#/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "#/components/ui/radio-group";
+import { DEFAULT_STRATEGY } from "#/lib/strategy";
 
 type Check = typeof checks.$inferSelect;
+type Strategy = "mobile" | "desktop";
 
 export const Route = createFileRoute("/")({
 	loader: () => listSites(),
@@ -44,6 +48,7 @@ function Home() {
 	const router = useRouter();
 	const [error, setError] = useState("");
 	const [running, setRunning] = useState<number | null>(null);
+	const [strategies, setStrategies] = useState<Record<number, Strategy>>({});
 
 	const form = useForm({
 		defaultValues: {
@@ -64,8 +69,9 @@ function Home() {
 	async function onCheck(siteId: number) {
 		setError("");
 		setRunning(siteId);
+		const strategy = strategies[siteId] ?? DEFAULT_STRATEGY;
 		try {
-			await runCheck({ data: { siteId } });
+			await runCheck({ data: { siteId, strategy} });
 			router.invalidate();
 		} catch (e) {
 			setError(e instanceof Error ? e.message : "Check failed");
@@ -131,10 +137,27 @@ function Home() {
 						<Link
 							to="/sites/$siteId"
 							params={{ siteId: String(s.id) }}
+							search={{ strategy: strategies[s.id] ?? DEFAULT_STRATEGY }}
 							className="flex-1"
 						>
 							<strong>{s.url}</strong>
 						</Link>
+						<RadioGroup
+							defaultValue={strategies[s.id] ?? DEFAULT_STRATEGY}
+							onValueChange={(value) =>
+								setStrategies((current) => ({ ...current, [s.id]: value as Strategy }))
+							}
+							className="flex-1 max-w-30"
+						>
+							<div className="flex items-center gap-3">
+								<RadioGroupItem value="mobile" id={`strategy-mobile-${s.id}`} />
+								<Label htmlFor={`strategy-mobile-${s.id}`}>Mobile</Label>
+							</div>
+							<div className="flex items-center gap-3">
+								<RadioGroupItem value="desktop" id={`strategy-desktop-${s.id}`} />
+								<Label htmlFor={`strategy-desktop-${s.id}`}>Desktop</Label>
+							</div>
+						</RadioGroup>
 						<Button
 							onClick={() => onCheck(s.id)}
 							disabled={running === s.id}
