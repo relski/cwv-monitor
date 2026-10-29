@@ -1,4 +1,3 @@
-import type { Strategy } from "#/lib/strategy";
 import {
 	index,
 	integer,
@@ -9,6 +8,7 @@ import {
 	timestamp,
 	unique,
 } from "drizzle-orm/pg-core";
+import type { Strategy } from "#/lib/strategy";
 
 export const sites = pgTable(
 	"sites",
@@ -22,9 +22,9 @@ export const sites = pgTable(
 );
 
 export const checks = pgTable(
-	"checks", 
+	"checks",
 	{
-		id: serial("id").primaryKey(),	
+		id: serial("id").primaryKey(),
 		siteId: integer("site_id")
 			.notNull()
 			.references(() => sites.id, { onDelete: "cascade" }),

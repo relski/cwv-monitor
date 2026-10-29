@@ -10,7 +10,7 @@ export type PsiResult = {
 
 export const fetchPsi = async (
 	url: string,
-	strategy: Strategy
+	strategy: Strategy,
 ): Promise<PsiResult> => {
 	const params = new URLSearchParams({
 		url,

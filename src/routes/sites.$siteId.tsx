@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import { StrategyToggle } from "#/components/strategy-toggle";
 import type { checks } from "#/db/schema";
 import type { CruxHistoryResult } from "#/lib/crux";
 import { cls, ms } from "#/lib/format";
+import { strategySearchSchema } from "#/lib/strategy";
 import { getSiteHistory } from "#/server/sites";
 import {
 	type ChartConfig,
@@ -18,25 +20,21 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { DEFAULT_STRATEGY, strategySchema } from "#/lib/strategy";
-import { z } from "zod";
 
 type Check = typeof checks.$inferSelect;
 
 export const Route = createFileRoute("/sites/$siteId")({
-	validateSearch: z.object({
-		strategy: strategySchema.catch(DEFAULT_STRATEGY),
-	}),
+	validateSearch: strategySearchSchema,
 	loaderDeps: ({ search }) => ({
-        strategy: search.strategy,
-    }),
-    loader: ({ params, deps }) =>
-        getSiteHistory({
-            data: {
-                siteId: Number(params.siteId),
-                strategy: deps.strategy,
-            },
-        }),
+		strategy: search.strategy,
+	}),
+	loader: ({ params, deps }) =>
+		getSiteHistory({
+			data: {
+				siteId: Number(params.siteId),
+				strategy: deps.strategy,
+			},
+		}),
 	component: SitePage,
 });
 
@@ -140,14 +138,25 @@ function CruxMetricChart({
 
 function SitePage() {
 	const { site, history, cruxHistory } = Route.useLoaderData();
+	const { strategy } = Route.useSearch();
+	const navigate = Route.useNavigate();
 
 	return (
 		<main style={{ maxWidth: 900, margin: "40px auto", padding: 16 }}>
-			<Link to="/" className="text-sm">
+			<Link to="/" className="text-sm" search={{ strategy }}>
 				← Back
 			</Link>
 			<h1 className="text-2xl my-5">{site.url}</h1>
-
+			<StrategyToggle
+				value={strategy}
+				onChange={(next) =>
+					navigate({
+						search: (prev) => ({ ...prev, strategy: next }),
+						replace: true,
+					})
+				}
+				className="my-2.5"
+			/>
 			<section className="mb-8">
 				<h2 className="mb-4 text-xl font-semibold">CrUX history</h2>
 				{cruxHistory ? (
@@ -172,15 +181,20 @@ function SitePage() {
 						/>
 					</div>
 				) : (
-					<p>No CrUX history available for this site.</p>
+					<p>No CrUX history available for {strategy} on this site.</p>
 				)}
 			</section>
 
-			{history.length === 0 ? (
-				<p>No checks yet.</p>
-			) : (
-				<HistoryTable history={history} />
-			)}
+			<section>
+				<h2 className="mb-4 text-xl font-semibold">
+					Saved checks ({strategy})
+				</h2>
+				{history.length === 0 ? (
+					<p>No {strategy} checks yet. Run one from the home page.</p>
+				) : (
+					<HistoryTable history={history} />
+				)}
+			</section>
 		</main>
 	);
 }

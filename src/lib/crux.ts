@@ -37,7 +37,10 @@ const query = async (body: Record<string, string>, strategy: Strategy) => {
 };
 
 // CrUX query for historical record fetch
-const queryHistory = async (body: Record<string, string>, strategy: Strategy) => {
+const queryHistory = async (
+	body: Record<string, string>,
+	strategy: Strategy,
+) => {
 	const res = await fetch(
 		`https://chromeuxreport.googleapis.com/v1/records:queryHistoryRecord?key=${requireEnv("GOOGLE_API_KEY")}`,
 		{
@@ -87,7 +90,10 @@ const parseHistory = (
 };
 
 // Try the exact page first, then the whole site, otherwise no data.
-export const fetchCrux = async (url: string, strategy: Strategy): Promise<CruxResult | null> => {
+export const fetchCrux = async (
+	url: string,
+	strategy: Strategy,
+): Promise<CruxResult | null> => {
 	const byUrl = await query({ url }, strategy);
 	if (byUrl) return parse(byUrl, "url");
 
@@ -97,11 +103,15 @@ export const fetchCrux = async (url: string, strategy: Strategy): Promise<CruxRe
 
 // Collect the history data
 export const fetchCruxHistory = async (
-	url: string, strategy: Strategy
+	url: string,
+	strategy: Strategy,
 ): Promise<CruxHistoryResult | null> => {
 	const byUrl = await queryHistory({ url }, strategy);
 	if (byUrl) return parseHistory(byUrl, "url");
 
-	const byOrigin = await queryHistory({ origin: new URL(url).origin }, strategy);
+	const byOrigin = await queryHistory(
+		{ origin: new URL(url).origin },
+		strategy,
+	);
 	return byOrigin ? parseHistory(byOrigin, "origin") : null;
 };

@@ -1,11 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
+import { strategySchema } from "#/lib/strategy";
 import { db } from "../db";
 import { sites } from "../db/schema";
 import { performCheck } from "../lib/check";
 import { requireUser } from "./auth";
-import { strategySchema } from "#/lib/strategy";
 
 export const runCheck = createServerFn({ method: "POST" })
 	.validator(z.object({ siteId: z.number(), strategy: strategySchema }))

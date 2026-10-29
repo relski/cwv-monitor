@@ -11,5 +11,8 @@ dist-ssr
 .vinxi
 __unconfig*
 todos.json
+TODO.md
+AGENTS.md
+agents.md
 
 .env
