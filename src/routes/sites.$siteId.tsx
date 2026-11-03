@@ -1,17 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 import { StrategyToggle } from "#/components/strategy-toggle";
-import type { checks } from "#/db/schema";
-import type { CruxHistoryResult } from "#/lib/crux";
-import { cls, ms } from "#/lib/format";
-import { strategySearchSchema } from "#/lib/strategy";
-import { getSiteHistory } from "#/server/sites";
 import {
 	type ChartConfig,
 	ChartContainer,
 	ChartTooltip,
 	ChartTooltipContent,
-} from "@/components/ui/chart";
+} from "#/components/ui/chart";
 import {
 	Table,
 	TableBody,
@@ -19,7 +14,12 @@ import {
 	TableHead,
 	TableHeader,
 	TableRow,
-} from "@/components/ui/table";
+} from "#/components/ui/table";
+import type { checks } from "#/db/schema";
+import type { CruxHistoryResult } from "#/lib/crux";
+import { cls, ms } from "#/lib/format";
+import { strategySearchSchema } from "#/lib/strategy";
+import { getSiteHistory } from "#/server/sites";
 
 type Check = typeof checks.$inferSelect;
 
@@ -142,7 +142,7 @@ function SitePage() {
 	const navigate = Route.useNavigate();
 
 	return (
-		<main style={{ maxWidth: 900, margin: "40px auto", padding: 16 }}>
+		<>
 			<Link to="/" className="text-sm" search={{ strategy }}>
 				← Back
 			</Link>
@@ -165,19 +165,19 @@ function SitePage() {
 							title="LCP (ms)"
 							values={cruxHistory.lcp}
 							dates={cruxHistory.dates}
-							color="#2563eb"
+							color="var(--chart-info)"
 						/>
 						<CruxMetricChart
 							title="INP (ms)"
 							values={cruxHistory.inp}
 							dates={cruxHistory.dates}
-							color="#16a34a"
+							color="var(--chart-info)"
 						/>
 						<CruxMetricChart
 							title="CLS"
 							values={cruxHistory.cls}
 							dates={cruxHistory.dates}
-							color="#ea580c"
+							color="var(--chart-info)"
 						/>
 					</div>
 				) : (
@@ -195,6 +195,6 @@ function SitePage() {
 					<HistoryTable history={history} />
 				)}
 			</section>
-		</main>
+		</>
 	);
 }

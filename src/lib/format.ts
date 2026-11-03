@@ -2,3 +2,5 @@
 export const ms = (v: number | null) =>
 	v === null ? "–" : `${Math.round(v)} ms`;
 export const cls = (v: number | null) => (v === null ? "–" : v.toFixed(3));
+export const score = (value: number | null) =>
+	value === null ? "–" : String(Math.round(value));

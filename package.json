@@ -56,12 +56,6 @@
       "esbuild": "^0.25.12"
     }
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild",
-      "lightningcss"
-    ]
-  },
   "allowScripts": {
     "esbuild@0.18.20": true,
     "esbuild@0.25.12": true,

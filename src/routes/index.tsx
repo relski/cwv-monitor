@@ -1,20 +1,21 @@
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { Binoculars, FlaskConical } from "lucide-react";
 import { useRef, useState } from "react";
 import { StrategyToggle } from "#/components/strategy-toggle";
+import { Button } from "#/components/ui/button";
+import { Field, FieldError, FieldGroup } from "#/components/ui/field";
+import { Input } from "#/components/ui/input";
 import type { checks } from "#/db/schema";
 import { runQueued } from "#/lib/concurrency";
 import { cls, ms } from "#/lib/format";
-import { strategySearchSchema } from "#/lib/strategy";
+import { type Strategy, strategySearchSchema } from "#/lib/strategy";
 import { runCheck } from "#/server/checks";
 import { addSite, listSites } from "#/server/sites";
-import { Button } from "@/components/ui/button";
-import { Field, FieldError, FieldGroup } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 
 type Check = typeof checks.$inferSelect;
 
-function runKey(siteId: number, strategy: string): string {
+function runKey(siteId: number, strategy: Strategy): string {
 	return `${siteId}:${strategy}`;
 }
 
@@ -41,12 +42,16 @@ function SiteResult({ latest }: { latest: Check }) {
 
 	return (
 		<div className="text-xs mt-1.5 grow shrink-0 basis-full">
-			<div>Field (real users): {fieldText}</div>
-			<div>
+			<div className="tabular-figures flex items-center gap-2">
+				<Binoculars />
+				Field (real users): {fieldText}
+			</div>
+			<div className="tabular-figures flex items-center gap-2">
+				<FlaskConical />
 				Lab (Lighthouse): LCP {ms(latest.labLcp)} · TBT {ms(latest.labTbt)} ·
 				CLS {cls(latest.labCls)} · score {latest.perfScore ?? "–"}
 			</div>
-			<div style={{ color: "#888" }}>
+			<div className="text-on-surface-variant tabular-figures">
 				checked {new Date(latest.createdAt).toLocaleString()}
 			</div>
 		</div>
@@ -169,7 +174,7 @@ function Home() {
 	}
 
 	return (
-		<main style={{ maxWidth: 1200, margin: "40px auto", padding: 16 }}>
+		<>
 			<h1 className="text-2xl">Core Web Vitals Monitor</h1>
 			<StrategyToggle
 				value={strategy}
@@ -231,7 +236,7 @@ function Home() {
 					</form.Field>
 				</FieldGroup>
 			</form>
-			{error && <p style={{ color: "crimson" }}>{error}</p>}
+			{error && <p className="text-destructive">{error}</p>}
 
 			<ul style={{ listStyle: "none", padding: 0 }}>
 				{sites.map((s) => {
@@ -241,7 +246,7 @@ function Home() {
 					return (
 						<li
 							key={s.id}
-							className="my-5 p-4 flex flex-wrap items-center bg-zinc-100"
+							className="my-5 flex flex-wrap items-center rounded-lg border border-outline-variant bg-card p-6"
 						>
 							<Link
 								to="/sites/$siteId"
@@ -255,7 +260,7 @@ function Home() {
 							{running.has(key) && <span className="text-xs">Checking…</span>}
 							{/* Error */}
 							{checkError && (
-								<div className="text-xs text-red-600 basis-full">
+								<div className="text-xs text-destructive basis-full">
 									{checkError}
 								</div>
 							)}
@@ -270,6 +275,6 @@ function Home() {
 					);
 				})}
 			</ul>
-		</main>
+		</>
 	);
 }

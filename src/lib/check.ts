@@ -1,5 +1,5 @@
-import { db } from "../db";
-import { checks } from "../db/schema";
+import { db } from "#/db";
+import { checks } from "#/db/schema";
 import { fetchCrux } from "./crux";
 import { fetchPsi } from "./psi";
 import type { Strategy } from "./strategy";
