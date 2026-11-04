@@ -1,23 +1,15 @@
-import { useForm } from "@tanstack/react-form";
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Binoculars, FlaskConical } from "lucide-react";
-import { useRef, useState } from "react";
+import { AddSiteForm } from "#/components/add-site-form";
 import { StrategyToggle } from "#/components/strategy-toggle";
 import { Button } from "#/components/ui/button";
-import { Field, FieldError, FieldGroup } from "#/components/ui/field";
-import { Input } from "#/components/ui/input";
 import type { checks } from "#/db/schema";
-import { runQueued } from "#/lib/concurrency";
+import { runKey, useCheckAll } from "#/hooks/use-check-all";
 import { cls, ms } from "#/lib/format";
-import { type Strategy, strategySearchSchema } from "#/lib/strategy";
-import { runCheck } from "#/server/checks";
-import { addSite, listSites } from "#/server/sites";
+import { strategySearchSchema } from "#/lib/strategy";
+import { listSites } from "#/server/sites";
 
 type Check = typeof checks.$inferSelect;
-
-function runKey(siteId: number, strategy: Strategy): string {
-	return `${siteId}:${strategy}`;
-}
 
 export const Route = createFileRoute("/")({
 	validateSearch: strategySearchSchema,
@@ -58,120 +50,14 @@ function SiteResult({ latest }: { latest: Check }) {
 	);
 }
 
-const MAX_IN_FLIGHT = 3;
-const START_SPACING_MS = 100;
-
 function Home() {
 	const sites = Route.useLoaderData();
-	const router = useRouter();
-	const [error, setError] = useState("");
-	const [running, setRunning] = useState<Set<string>>(() => new Set());
-	const [checkingAll, setCheckingAll] = useState(false);
 	const { strategy } = Route.useSearch();
+	const { onCheckAll, checkingAll, running, checkErrors } = useCheckAll(
+		sites,
+		strategy,
+	);
 	const navigate = Route.useNavigate();
-	const ref = useRef(false);
-	const [checkErrors, setCheckErrors] = useState<Record<string, string>>({});
-
-	const form = useForm({
-		defaultValues: {
-			url: "",
-		},
-		onSubmit: async ({ value }) => {
-			setError("");
-			try {
-				await addSite({ data: { url: value.url } });
-				form.reset();
-				router.invalidate();
-			} catch {
-				setError("Enter a valid URL, including https://");
-			}
-		},
-	});
-
-	async function onCheckAll() {
-		if (sites.length === 0 || ref.current) return;
-		ref.current = true;
-		setCheckingAll(true);
-		setError("");
-
-		const runStrategy = strategy;
-		const runSites = sites;
-
-		setRunning((previous) => {
-			const next = new Set(previous);
-			for (const site of runSites) {
-				next.add(runKey(site.id, runStrategy));
-			}
-			return next;
-		});
-
-		setCheckErrors((previous) => {
-			const next = { ...previous };
-
-			for (const site of runSites) {
-				delete next[runKey(site.id, runStrategy)];
-			}
-
-			return next;
-		});
-
-		const worker = async (site: (typeof runSites)[number]) => {
-			const key = runKey(site.id, runStrategy);
-
-			try {
-				try {
-					await runCheck({ data: { siteId: site.id, strategy: runStrategy } });
-				} catch (e) {
-					const message = e instanceof Error ? e.message : "Check failed";
-
-					setCheckErrors((previous) => ({
-						...previous,
-						[key]: message,
-					}));
-
-					return;
-				}
-
-				// The check succeeded, so remove any previous check error.
-				setCheckErrors((previous) => {
-					const next = { ...previous };
-					delete next[key];
-					return next;
-				});
-
-				try {
-					await router.invalidate();
-				} catch (e) {
-					// Keep refresh failures distinct from check failures.
-					const message =
-						e instanceof Error
-							? `Check succeeded, but refreshing results failed: ${e.message}`
-							: "Check succeeded, but refreshing results failed";
-
-					setCheckErrors((previous) => ({
-						...previous,
-						[key]: message,
-					}));
-				}
-			} finally {
-				setRunning((previous) => {
-					const next = new Set(previous);
-					next.delete(key);
-					return next;
-				});
-			}
-		};
-
-		try {
-			await runQueued(runSites, worker, {
-				limit: MAX_IN_FLIGHT,
-				startIntervalMs: START_SPACING_MS,
-			});
-		} finally {
-			ref.current = false;
-			setCheckingAll(false);
-		}
-	}
 
 	return (
 		<>
@@ -193,51 +79,7 @@ function Home() {
 			>
 				{checkingAll ? "Checking…" : "Check All"}
 			</Button>
-			<form
-				onSubmit={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					form.handleSubmit();
-				}}
-				className="my-5"
-			>
-				<FieldGroup>
-					<form.Field
-						name="url"
-						validators={{
-							onChange: ({ value }) =>
-								value && !/^https?:\/\/.+/.test(value)
-									? "Enter a valid URL"
-									: undefined,
-						}}
-					>
-						{(field) => (
-							<Field orientation="horizontal" className="flex flex-wrap">
-								<Input
-									id={field.name}
-									name={field.name}
-									type="url"
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
-									placeholder="https://example.com"
-									className="flex-1"
-								/>
-								<Button type="submit">Add</Button>
-								{field.state.meta.errors.length > 0 && (
-									<FieldError
-										errors={field.state.meta.errors.map((err) => ({
-											message: String(err),
-										}))}
-									/>
-								)}
-							</Field>
-						)}
-					</form.Field>
-				</FieldGroup>
-			</form>
-			{error && <p className="text-destructive">{error}</p>}
-
+			<AddSiteForm />
 			<ul style={{ listStyle: "none", padding: 0 }}>
 				{sites.map((s) => {
 					const key = runKey(s.id, strategy);
