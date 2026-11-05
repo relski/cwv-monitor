@@ -3,7 +3,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "#/db";
 import { checks, sites } from "#/db/schema";
-import { fetchCruxHistory } from "#/lib/crux";
+import { type CruxHistoryResult, fetchCruxHistory } from "#/lib/crux";
 import { strategySchema } from "#/lib/strategy";
 import { requireUser } from "./auth";
 
@@ -80,7 +80,18 @@ export const getSiteHistory = createServerFn({ method: "GET" })
 			.orderBy(desc(checks.createdAt))
 			.limit(50);
 
-		const cruxHistory = await fetchCruxHistory(site.url, data.strategy);
+		let cruxHistory: CruxHistoryResult | null;
+		let cruxHistoryFailed = false;
+		try {
+			cruxHistory = await fetchCruxHistory(site.url, data.strategy);
+		} catch (error) {
+			cruxHistory = null;
+			cruxHistoryFailed = true;
+			console.error(
+				`CrUX history failed for site {site.id} ({strategy})`,
+				error,
+			);
+		}
 
-		return { site, history, cruxHistory };
+		return { site, history, cruxHistory, cruxHistoryFailed };
 	});

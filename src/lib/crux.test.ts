@@ -31,6 +31,24 @@ const historyRecord = {
 	},
 };
 
+// A messier history: string values, a null item and a metric that is missing.
+const historyRecordWithGaps = {
+	record: {
+		metrics: {
+			largest_contentful_paint: {
+				percentilesTimeseries: { p75s: [2300, null] },
+			},
+			cumulative_layout_shift: {
+				percentilesTimeseries: { p75s: ["0.05", "0.06"] },
+			},
+		},
+		collectionPeriods: [
+			{ lastDate: { year: 2026, month: 9, day: 1 } },
+			{ lastDate: { year: 2026, month: 10, day: 1 } },
+		],
+	},
+};
+
 const json = (body: unknown, status = 200) =>
 	new Response(JSON.stringify(body), { status });
 
@@ -119,5 +137,41 @@ describe("fetchCruxHistory", () => {
 
 		expect(result?.lcp).toEqual([2300, 2400]);
 		expect(result?.dates).toHaveLength(2);
+	});
+
+	it("converts string values to numbers", async () => {
+		fetchMock.mockImplementation(async () => json(historyRecordWithGaps));
+
+		const result = await fetchCruxHistory("https://example.com/", "mobile");
+
+		expect(result?.cls).toEqual([0.05, 0.06]);
+	});
+
+	it("keeps null items in a timeseries", async () => {
+		fetchMock.mockImplementation(async () => json(historyRecordWithGaps));
+
+		const result = await fetchCruxHistory("https://example.com/", "mobile");
+
+		expect(result?.lcp).toEqual([2300, null]);
+	});
+
+	it("returns null for a metric that is missing", async () => {
+		fetchMock.mockImplementation(async () => json(historyRecordWithGaps));
+
+		const result = await fetchCruxHistory("https://example.com/", "mobile");
+
+		expect(result?.inp).toBeNull();
+		expect(result?.lcp).toEqual([2300, null]);
+	});
+
+	it("returns the collection dates in order", async () => {
+		fetchMock.mockImplementation(async () => json(historyRecord));
+
+		const result = await fetchCruxHistory("https://example.com/", "mobile");
+
+		expect(result?.dates).toEqual([
+			{ year: 2026, month: 9, day: 1 },
+			{ year: 2026, month: 10, day: 1 },
+		]);
 	});
 });

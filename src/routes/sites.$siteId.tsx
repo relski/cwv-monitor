@@ -83,13 +83,13 @@ function CruxMetricChart({
 	color,
 }: {
 	title: string;
-	values: number[] | null;
+	values: (number | null)[] | null;
 	dates: CruxHistoryResult["dates"];
 	color: string;
 }) {
 	const data = dates.map((date, index) => ({
 		date: `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`,
-		value: values?.[index] == null ? null : Number(values[index]),
+		value: values?.[index],
 	}));
 	const config = {
 		value: { label: title, color },
@@ -137,7 +137,8 @@ function CruxMetricChart({
 }
 
 function SitePage() {
-	const { site, history, cruxHistory } = Route.useLoaderData();
+	const { site, history, cruxHistory, cruxHistoryFailed } =
+		Route.useLoaderData();
 	const { strategy } = Route.useSearch();
 	const navigate = Route.useNavigate();
 
@@ -180,6 +181,8 @@ function SitePage() {
 							color="var(--chart-info)"
 						/>
 					</div>
+				) : cruxHistoryFailed ? (
+					<p>Couldn’t load CrUX history. Try reloading the page.</p>
 				) : (
 					<p>No CrUX history available for {strategy} on this site.</p>
 				)}

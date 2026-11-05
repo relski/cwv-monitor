@@ -10,56 +10,89 @@ export type CruxResult = {
 
 export type CruxHistoryResult = {
 	source: "url" | "origin";
-	lcp: number[] | null;
-	inp: number[] | null;
-	cls: number[] | null;
+	lcp: (number | null)[] | null;
+	inp: (number | null)[] | null;
+	cls: (number | null)[] | null;
 	dates: { year: number; month: number; day: number }[];
+};
+
+type CruxMetric = {
+	percentiles?: { p75?: string | number };
+};
+
+type CruxResponse = {
+	record: {
+		metrics: {
+			largest_contentful_paint?: CruxMetric;
+			interaction_to_next_paint?: CruxMetric;
+			cumulative_layout_shift?: CruxMetric;
+		};
+	};
+};
+
+type CruxHistoryMetric = {
+	percentilesTimeseries?: { p75s?: (string | number | null)[] };
+};
+
+type CruxHistoryResponse = {
+	record: {
+		metrics: {
+			largest_contentful_paint?: CruxHistoryMetric;
+			interaction_to_next_paint?: CruxHistoryMetric;
+			cumulative_layout_shift?: CruxHistoryMetric;
+		};
+		collectionPeriods: {
+			lastDate: {
+				year: number;
+				month: number;
+				day: number;
+			};
+		}[];
+	};
 };
 
 // null/undefined -> null, otherwise a real number (CLS arrives as a string)
 const toNum = (v: unknown): number | null => (v == null ? null : Number(v));
 
-// One CrUX request. Returns the JSON, or null when Google has no data (404).
-const query = async (body: Record<string, string>, strategy: Strategy) => {
+type Endpoint = "queryRecord" | "queryHistoryRecord";
+
+// How many collection periods of history to request.
+const HISTORY_PERIODS = 12;
+
+// One CrUX request to the current-data or history endpoint. Returns the JSON,
+// or null when Google has no data (404). `formFactor` is added last so that
+// `body` and `extra` cannot override it.
+const query = async ({
+	endpoint,
+	body,
+	strategy,
+	extra = {},
+}: {
+	endpoint: Endpoint;
+	body: Record<string, string>;
+	strategy: Strategy;
+	extra?: Record<string, number>;
+}) => {
 	const res = await fetch(
-		`https://chromeuxreport.googleapis.com/v1/records:queryRecord?key=${requireEnv("GOOGLE_API_KEY")}`,
-		{
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ ...body, formFactor: CRUX_FORM_FACTOR[strategy] }),
-		},
-	);
-
-	if (res.status === 404) return null;
-	if (!res.ok) throw new Error(`CrUX ${res.status}: ${await res.text()}`);
-
-	return res.json();
-};
-
-// CrUX query for historical record fetch
-const queryHistory = async (
-	body: Record<string, string>,
-	strategy: Strategy,
-) => {
-	const res = await fetch(
-		`https://chromeuxreport.googleapis.com/v1/records:queryHistoryRecord?key=${requireEnv("GOOGLE_API_KEY")}`,
+		`https://chromeuxreport.googleapis.com/v1/records:${endpoint}?key=${requireEnv("GOOGLE_API_KEY")}`,
 		{
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({
 				...body,
+				...extra,
 				formFactor: CRUX_FORM_FACTOR[strategy],
-				collectionPeriodCount: 12,
 			}),
 		},
 	);
+
 	if (res.status === 404) return null;
 	if (!res.ok) throw new Error(`CrUX ${res.status}: ${await res.text()}`);
 
 	return res.json();
 };
 
-const parse = (data: any, source: "url" | "origin"): CruxResult => {
+const parse = (data: CruxResponse, source: "url" | "origin"): CruxResult => {
 	const metrics = data.record.metrics;
 
 	return {
@@ -71,47 +104,77 @@ const parse = (data: any, source: "url" | "origin"): CruxResult => {
 };
 
 const parseHistory = (
-	data: any,
+	data: CruxHistoryResponse,
 	source: "url" | "origin",
 ): CruxHistoryResult => {
-	const metrics = data.record.metrics;
-	const collectionPeriods = data.record.collectionPeriods;
+	const { metrics, collectionPeriods } = data.record;
 
 	return {
 		source,
-		lcp: metrics.largest_contentful_paint?.percentilesTimeseries?.p75s,
-		inp: metrics.interaction_to_next_paint?.percentilesTimeseries?.p75s,
-		cls: metrics.cumulative_layout_shift?.percentilesTimeseries?.p75s,
-		dates: collectionPeriods.map(
-			(period: { lastDate: { year: number; month: number; day: number } }) =>
-				period.lastDate,
-		),
+		lcp:
+			metrics.largest_contentful_paint?.percentilesTimeseries?.p75s?.map(
+				toNum,
+			) ?? null,
+		inp:
+			metrics.interaction_to_next_paint?.percentilesTimeseries?.p75s?.map(
+				toNum,
+			) ?? null,
+		cls:
+			metrics.cumulative_layout_shift?.percentilesTimeseries?.p75s?.map(
+				toNum,
+			) ?? null,
+		dates: collectionPeriods.map(({ lastDate }) => lastDate),
 	};
 };
 
-// Try the exact page first, then the whole site, otherwise no data.
-export const fetchCrux = async (
-	url: string,
-	strategy: Strategy,
-): Promise<CruxResult | null> => {
-	const byUrl = await query({ url }, strategy);
-	if (byUrl) return parse(byUrl, "url");
+// Try the exact page first, then the whole site, otherwise no data. Errors
+// other than a 404 are not caught here, so they still reach the caller.
+const queryPageThenOrigin = async <T>({
+	url,
+	endpoint,
+	strategy,
+	extra,
+	read,
+}: {
+	url: string;
+	endpoint: Endpoint;
+	strategy: Strategy;
+	extra?: Record<string, number>;
+	read: (data: any, source: "url" | "origin") => T;
+}): Promise<T | null> => {
+	const byUrl = await query({ endpoint, body: { url }, strategy, extra });
+	if (byUrl) return read(byUrl, "url");
 
-	const byOrigin = await query({ origin: new URL(url).origin }, strategy);
-	return byOrigin ? parse(byOrigin, "origin") : null;
-};
-
-// Collect the history data
-export const fetchCruxHistory = async (
-	url: string,
-	strategy: Strategy,
-): Promise<CruxHistoryResult | null> => {
-	const byUrl = await queryHistory({ url }, strategy);
-	if (byUrl) return parseHistory(byUrl, "url");
-
-	const byOrigin = await queryHistory(
-		{ origin: new URL(url).origin },
+	const byOrigin = await query({
+		endpoint,
+		body: { origin: new URL(url).origin },
 		strategy,
-	);
-	return byOrigin ? parseHistory(byOrigin, "origin") : null;
+		extra,
+	});
+	return byOrigin ? read(byOrigin, "origin") : null;
 };
+
+// Current CrUX data for the page, falling back to the whole site.
+export const fetchCrux = (
+	url: string,
+	strategy: Strategy,
+): Promise<CruxResult | null> =>
+	queryPageThenOrigin({
+		url,
+		endpoint: "queryRecord",
+		strategy,
+		read: parse,
+	});
+
+// Historical CrUX data for the page, falling back to the whole site.
+export const fetchCruxHistory = (
+	url: string,
+	strategy: Strategy,
+): Promise<CruxHistoryResult | null> =>
+	queryPageThenOrigin({
+		url,
+		endpoint: "queryHistoryRecord",
+		strategy,
+		extra: { collectionPeriodCount: HISTORY_PERIODS },
+		read: parseHistory,
+	});
