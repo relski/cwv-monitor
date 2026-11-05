@@ -8,6 +8,22 @@ export type PsiResult = {
 	score: number | null;
 };
 
+type PsiAudit = {
+	numericValue?: number;
+};
+
+// Only the parts of the PageSpeed Insights response that fetchPsi reads.
+type PsiResponse = {
+	lighthouseResult: {
+		audits: Record<string, PsiAudit | undefined>;
+		categories: {
+			performance: {
+				score?: number | null; // 0-1
+			};
+		};
+	};
+};
+
 export const fetchPsi = async (
 	url: string,
 	strategy: Strategy,
@@ -24,7 +40,7 @@ export const fetchPsi = async (
 	);
 	if (!res.ok) throw new Error(`PSI ${res.status}: ${await res.text()}`);
 
-	const data: any = await res.json();
+	const data: PsiResponse = await res.json();
 	const lighthouse = data.lighthouseResult;
 	const audits = lighthouse.audits;
 	const score = lighthouse.categories.performance.score; // 0-1

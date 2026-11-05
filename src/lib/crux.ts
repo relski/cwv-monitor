@@ -129,7 +129,7 @@ const parseHistory = (
 
 // Try the exact page first, then the whole site, otherwise no data. Errors
 // other than a 404 are not caught here, so they still reach the caller.
-const queryPageThenOrigin = async <T>({
+const queryPageThenOrigin = async <TResponse, T>({
 	url,
 	endpoint,
 	strategy,
@@ -140,7 +140,7 @@ const queryPageThenOrigin = async <T>({
 	endpoint: Endpoint;
 	strategy: Strategy;
 	extra?: Record<string, number>;
-	read: (data: any, source: "url" | "origin") => T;
+	read: (data: TResponse, source: "url" | "origin") => T;
 }): Promise<T | null> => {
 	const byUrl = await query({ endpoint, body: { url }, strategy, extra });
 	if (byUrl) return read(byUrl, "url");

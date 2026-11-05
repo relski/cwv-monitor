@@ -40,6 +40,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 		<html lang="en" suppressHydrationWarning>
 			<head>
 				<script
+					// biome-ignore lint/security/noDangerouslySetInnerHtml: fixed theme script with no user input; it must run before first paint to avoid a theme flash
 					dangerouslySetInnerHTML={{
 						__html: `
 							try {
