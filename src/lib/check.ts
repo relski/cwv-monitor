@@ -25,6 +25,10 @@ export const performCheck = async (
 			labCls: psi.cls,
 			labTbt: psi.tbt,
 			perfScore: psi.score,
+			fieldFcp: crux?.fcp ?? null,
+			fieldTtfb: crux?.ttfb ?? null,
+			labFcp: psi.fcp,
+			labSpeedIndex: psi.speedIndex,
 		})
 		.returning();
 	return row;

@@ -1,30 +1,38 @@
 import type { Rating } from "#/lib/thresholds";
 import { cn } from "#/lib/utils";
 
-const DOT_COLORS: Record<Rating, string> = {
-	good: "bg-chart-good",
-	"needs-improvement": "bg-chart-warning",
-	poor: "bg-chart-poor",
+const RATING_STYLES: Record<
+	Rating | "none",
+	{ className: string; label: string }
+> = {
+	good: { className: "bg-chart-good", label: "Good" },
+	"needs-improvement": {
+		className: "bg-chart-warning",
+		label: "Needs improvement",
+	},
+	poor: { className: "bg-chart-poor", label: "Poor" },
+	none: { className: "bg-chart-neutral", label: "No data" },
 };
 
 function StatusDot({
 	rating,
 	className,
+	hideLabel,
 }: {
 	rating: Rating | null;
 	className?: string;
+	hideLabel?: boolean;
 }) {
-	const color = rating === null ? "bg-chart-neutral" : DOT_COLORS[rating];
+	const style = rating === null ? RATING_STYLES.none : RATING_STYLES[rating];
 
 	return (
-		<span
-			aria-hidden="true"
-			className={cn(
-				"inline-block size-2 shrink-0 rounded-full",
-				color,
-				className,
-			)}
-		/>
+		<span className={cn("inline-flex items-center gap-1.5", className)}>
+			<span
+				aria-hidden="true"
+				className={cn("size-2 shrink-0 rounded-full", style.className)}
+			/>
+			<span className={hideLabel ? "sr-only" : undefined}>{style.label}</span>
+		</span>
 	);
 }
 

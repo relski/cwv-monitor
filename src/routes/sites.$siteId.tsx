@@ -1,5 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
+import {
+	CartesianGrid,
+	Line,
+	LineChart,
+	ReferenceLine,
+	XAxis,
+	YAxis,
+} from "recharts";
+import { FORMATTER, MetricValue } from "#/components/metric-value";
+import { SourceIcon } from "#/components/source-icon";
 import { StrategyToggle } from "#/components/strategy-toggle";
 import {
 	type ChartConfig,
@@ -17,8 +26,8 @@ import {
 } from "#/components/ui/table";
 import type { checks } from "#/db/schema";
 import type { CruxHistoryResult } from "#/lib/crux";
-import { cls, ms } from "#/lib/format";
 import { strategySearchSchema } from "#/lib/strategy";
+import { type Metric, type Rating, rate, THRESHOLDS } from "#/lib/thresholds";
 import { getSiteHistory } from "#/server/sites";
 
 type Check = typeof checks.$inferSelect;
@@ -43,16 +52,17 @@ const sourceLabels = {
 	origin: "site-wide",
 } as const;
 
-function HistoryTable({ history }: { history: Check[] }) {
+function FieldHistoryTable({ history }: { history: Check[] }) {
 	return (
 		<Table>
 			<TableHeader>
 				<TableRow>
 					<TableHead>Checked</TableHead>
-					<TableHead>Field LCP</TableHead>
-					<TableHead>Field INP</TableHead>
-					<TableHead>Field CLS</TableHead>
-					<TableHead>Lab score</TableHead>
+					<TableHead>FCP</TableHead>
+					<TableHead>LCP</TableHead>
+					<TableHead>CLS</TableHead>
+					<TableHead>INP</TableHead>
+					<TableHead>TTFB</TableHead>
 					<TableHead>Source</TableHead>
 				</TableRow>
 			</TableHeader>
@@ -60,10 +70,21 @@ function HistoryTable({ history }: { history: Check[] }) {
 				{history.map((c) => (
 					<TableRow key={c.id}>
 						<TableCell>{new Date(c.createdAt).toLocaleString()}</TableCell>
-						<TableCell>{ms(c.fieldLcp)}</TableCell>
-						<TableCell>{ms(c.fieldInp)}</TableCell>
-						<TableCell>{cls(c.fieldCls)}</TableCell>
-						<TableCell>{c.perfScore ?? "–"}</TableCell>
+						<TableCell>
+							<MetricValue metric="fcp" value={c.fieldFcp} />
+						</TableCell>
+						<TableCell>
+							<MetricValue metric="lcp" value={c.fieldLcp} />
+						</TableCell>
+						<TableCell>
+							<MetricValue metric="cls" value={c.fieldCls} />
+						</TableCell>
+						<TableCell>
+							<MetricValue metric="inp" value={c.fieldInp} />
+						</TableCell>
+						<TableCell>
+							<MetricValue metric="ttfb" value={c.fieldTtfb} />
+						</TableCell>
 						<TableCell>
 							{c.fieldSource
 								? sourceLabels[c.fieldSource as keyof typeof sourceLabels]
@@ -76,17 +97,70 @@ function HistoryTable({ history }: { history: Check[] }) {
 	);
 }
 
+function LabHistoryTable({ history }: { history: Check[] }) {
+	return (
+		<Table>
+			<TableHeader>
+				<TableRow>
+					<TableHead>Checked</TableHead>
+					<TableHead>FCP</TableHead>
+					<TableHead>LCP</TableHead>
+					<TableHead>CLS</TableHead>
+					<TableHead>TBT</TableHead>
+					<TableHead>Speed Index</TableHead>
+					<TableHead>Score</TableHead>
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				{history.map((c) => (
+					<TableRow key={c.id}>
+						<TableCell>{new Date(c.createdAt).toLocaleString()}</TableCell>
+						<TableCell>
+							<MetricValue metric="fcp" value={c.labFcp} />
+						</TableCell>
+						<TableCell>
+							<MetricValue metric="lcp" value={c.labLcp} />
+						</TableCell>
+						<TableCell>
+							<MetricValue metric="cls" value={c.labCls} />
+						</TableCell>
+						<TableCell>
+							<MetricValue metric="tbt" value={c.labTbt} />
+						</TableCell>
+						<TableCell>
+							<MetricValue metric="speedIndex" value={c.labSpeedIndex} />
+						</TableCell>
+						<TableCell>
+							<MetricValue metric="score" value={c.perfScore} />
+						</TableCell>
+					</TableRow>
+				))}
+			</TableBody>
+		</Table>
+	);
+}
+
+const RATING_COLOR: Record<Rating | "none", string> = {
+	good: "var(--chart-good)",
+	"needs-improvement": "var(--chart-warning)",
+	poor: "var(--chart-poor)",
+	none: "var(--chart-neutral)",
+};
+
 function CruxMetricChart({
 	title,
 	values,
 	dates,
-	color,
+	metric,
 }: {
 	title: string;
 	values: (number | null)[] | null;
 	dates: CruxHistoryResult["dates"];
-	color: string;
+	metric: Metric;
 }) {
+	const latest = [...(values ?? [])].reverse().find((v) => v !== null) ?? null;
+	const rating = rate(metric, latest);
+	const color = RATING_COLOR[rating ?? "none"];
 	const data = dates.map((date, index) => ({
 		date: `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`,
 		value: values?.[index],
@@ -96,8 +170,11 @@ function CruxMetricChart({
 	} satisfies ChartConfig;
 
 	return (
-		<section>
-			<h2 className="mb-2 text-lg font-medium">{title}</h2>
+		<section className="rounded-lg border border-outline-variant bg-card p-4">
+			<div className="mb-2 flex items-center justify-between gap-2">
+				<h3 className="text-lg font-medium">{title}</h3>
+				<MetricValue metric={metric} value={latest} />
+			</div>
 			<ChartContainer config={config} className="min-h-56 w-full">
 				<LineChart
 					accessibilityLayer
@@ -112,19 +189,35 @@ function CruxMetricChart({
 						minTickGap={32}
 					/>
 					<YAxis
-						width={56}
+						width={64}
 						tickLine={false}
 						axisLine={false}
-						tickFormatter={(value: number) => String(value)}
+						tickFormatter={(value: number) => FORMATTER[metric](value)}
 					/>
 					<ChartTooltip
 						content={
-							<ChartTooltipContent labelFormatter={(label) => String(label)} />
+							<ChartTooltipContent
+								className="border-outline-variant bg-surface-container-high shadow-none"
+								labelFormatter={(label) => String(label)}
+							/>
 						}
+					/>
+					<ReferenceLine
+						y={THRESHOLDS[metric].good}
+						stroke="var(--chart-neutral)"
+						strokeDasharray="4 4"
+						strokeWidth={1}
+						ifOverflow="extendDomain"
+					/>
+					<ReferenceLine
+						y={THRESHOLDS[metric].poor}
+						stroke="var(--chart-neutral)"
+						strokeDasharray="4 4"
+						strokeWidth={1}
 					/>
 					<Line
 						dataKey="value"
-						type="monotone"
+						type="linear"
 						stroke="var(--color-value)"
 						strokeWidth={2}
 						dot={false}
@@ -163,22 +256,22 @@ function SitePage() {
 				{cruxHistory ? (
 					<div className="grid gap-6 md:grid-cols-3">
 						<CruxMetricChart
-							title="LCP (ms)"
+							title="LCP"
 							values={cruxHistory.lcp}
 							dates={cruxHistory.dates}
-							color="var(--chart-info)"
+							metric="lcp"
 						/>
 						<CruxMetricChart
-							title="INP (ms)"
+							title="INP"
 							values={cruxHistory.inp}
 							dates={cruxHistory.dates}
-							color="var(--chart-info)"
+							metric="inp"
 						/>
 						<CruxMetricChart
 							title="CLS"
 							values={cruxHistory.cls}
 							dates={cruxHistory.dates}
-							color="var(--chart-info)"
+							metric="cls"
 						/>
 					</div>
 				) : cruxHistoryFailed ? (
@@ -195,7 +288,22 @@ function SitePage() {
 				{history.length === 0 ? (
 					<p>No {strategy} checks yet. Run one from the home page.</p>
 				) : (
-					<HistoryTable history={history} />
+					<div className="flex flex-col gap-8">
+						<div>
+							<div className="mb-2 flex items-center gap-2">
+								<SourceIcon source="field" />
+								<h3 className="text-lg font-medium">Field data (real users)</h3>
+							</div>
+							<FieldHistoryTable history={history} />
+						</div>
+						<div>
+							<div className="mb-2 flex items-center gap-2">
+								<SourceIcon source="lab" />
+								<h3 className="text-lg font-medium">Lab data (Lighthouse)</h3>
+							</div>
+							<LabHistoryTable history={history} />
+						</div>
+					</div>
 				)}
 			</section>
 		</>

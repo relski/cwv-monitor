@@ -35,11 +35,15 @@ export const checks = pgTable(
 		fieldLcp: real("field_lcp"), // milliseconds
 		fieldInp: real("field_inp"), // milliseconds
 		fieldCls: real("field_cls"), // unitless score
+		fieldFcp: real("field_fcp"), // milliseconds
+		fieldTtfb: real("field_ttfb"), // milliseconds
 
 		// Lab data: a test run now, from PageSpeed Insights
 		labLcp: real("lab_lcp"),
 		labCls: real("lab_cls"),
 		labTbt: real("lab_tbt"), // stand-in for INP, which can't be measured in a lab
+		labFcp: real("lab_fcp"),
+		labSpeedIndex: real("lab_speed_index"),
 		perfScore: integer("perf_score"), // 0-100
 
 		createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -52,3 +56,5 @@ export const checks = pgTable(
 		),
 	],
 );
+
+export type Check = typeof checks.$inferSelect;

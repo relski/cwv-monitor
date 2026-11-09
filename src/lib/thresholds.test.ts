@@ -39,6 +39,33 @@ const cases: [Metric, number, Rating][] = [
 	["tbt", 601, "poor"],
 	["tbt", 800, "poor"],
 
+	// FCP (ms)
+	["fcp", 1000, "good"],
+	["fcp", 1800, "good"],
+	["fcp", 1801, "needs-improvement"],
+	["fcp", 2500, "needs-improvement"],
+	["fcp", 3000, "needs-improvement"],
+	["fcp", 3001, "poor"],
+	["fcp", 4500, "poor"],
+
+	// TTFB (ms)
+	["ttfb", 500, "good"],
+	["ttfb", 800, "good"],
+	["ttfb", 801, "needs-improvement"],
+	["ttfb", 1200, "needs-improvement"],
+	["ttfb", 1800, "needs-improvement"],
+	["ttfb", 1801, "poor"],
+	["ttfb", 2500, "poor"],
+
+	// Speed Index (ms)
+	["speedIndex", 2000, "good"],
+	["speedIndex", 3400, "good"],
+	["speedIndex", 3401, "needs-improvement"],
+	["speedIndex", 4500, "needs-improvement"],
+	["speedIndex", 5800, "needs-improvement"],
+	["speedIndex", 5801, "poor"],
+	["speedIndex", 7000, "poor"],
+
 	// Score (0–100)
 	["score", 100, "good"],
 	["score", 90, "good"],
@@ -55,7 +82,16 @@ describe("rate", () => {
 		expect(rate(metric, value)).toBe(expected);
 	});
 
-	const metrics: Metric[] = ["lcp", "inp", "cls", "tbt", "score"];
+	const metrics: Metric[] = [
+		"lcp",
+		"inp",
+		"cls",
+		"tbt",
+		"score",
+		"fcp",
+		"ttfb",
+		"speedIndex",
+	];
 
 	it.each(metrics)("rate(%s, null) is null", (metric) => {
 		expect(rate(metric, null)).toBeNull();

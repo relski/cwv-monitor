@@ -1,19 +1,16 @@
-import { cls, ms, score } from "#/lib/format";
-import { type Metric, type Rating, rate } from "#/lib/thresholds";
+import { cls, ms, score, seconds } from "#/lib/format";
+import { type Metric, rate } from "#/lib/thresholds";
 import { StatusDot } from "./status-dot";
 
 const FORMATTER: Record<Metric, (v: number | null) => string> = {
-	lcp: ms,
+	lcp: seconds,
 	inp: ms,
 	cls,
 	tbt: ms,
 	score,
-};
-
-const LABEL: Record<Rating, string> = {
-	good: "Good",
-	"needs-improvement": "Needs Improvement",
-	poor: "Poor",
+	fcp: seconds,
+	ttfb: seconds,
+	speedIndex: seconds,
 };
 
 function MetricValue({
@@ -24,15 +21,13 @@ function MetricValue({
 	value: number | null;
 }) {
 	const rating = rate(metric, value);
-	const label = rating === null ? "No data" : LABEL[rating];
 
 	return (
 		<span className="inline-flex items-center gap-1.5 tabular-figures">
-			<StatusDot rating={rating} />
+			<StatusDot rating={rating} hideLabel />
 			<span>{FORMATTER[metric](value)}</span>
-			<span className="sr-only">{label}</span>
 		</span>
 	);
 }
 
-export { MetricValue };
+export { MetricValue, FORMATTER };

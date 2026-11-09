@@ -19,6 +19,18 @@ export const THRESHOLDS = {
 		good: 90,
 		poor: 50,
 	},
+	fcp: {
+		good: 1800,
+		poor: 3000,
+	},
+	ttfb: {
+		good: 800,
+		poor: 1800,
+	},
+	speedIndex: {
+		good: 3400,
+		poor: 5800,
+	},
 } as const;
 export type Metric = keyof typeof THRESHOLDS;
 export type Rating = "good" | "needs-improvement" | "poor";

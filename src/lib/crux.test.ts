@@ -7,6 +7,8 @@ const cruxRecord = {
 			largest_contentful_paint: { percentiles: { p75: 2300 } },
 			interaction_to_next_paint: { percentiles: { p75: 150 } },
 			cumulative_layout_shift: { percentiles: { p75: "0.05" } },
+			first_contentful_paint: { percentiles: { p75: 1500 } },
+			experimental_time_to_first_byte: { percentiles: { p75: 600 } },
 		},
 	},
 };
@@ -114,6 +116,21 @@ describe("fetchCrux", () => {
 			lcp: 2300,
 			inp: 150,
 			cls: 0.05,
+			fcp: 1500,
+			ttfb: 600,
+		});
+	});
+
+	it("returns null for metrics CrUX has no entry for", async () => {
+		fetchMock.mockImplementation(async () => json({ record: { metrics: {} } }));
+
+		expect(await fetchCrux("https://example.com/", "mobile")).toEqual({
+			source: "url",
+			lcp: null,
+			inp: null,
+			cls: null,
+			fcp: null,
+			ttfb: null,
 		});
 	});
 });

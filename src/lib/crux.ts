@@ -6,6 +6,8 @@ export type CruxResult = {
 	lcp: number | null;
 	inp: number | null;
 	cls: number | null;
+	fcp: number | null;
+	ttfb: number | null;
 };
 
 export type CruxHistoryResult = {
@@ -26,6 +28,8 @@ type CruxResponse = {
 			largest_contentful_paint?: CruxMetric;
 			interaction_to_next_paint?: CruxMetric;
 			cumulative_layout_shift?: CruxMetric;
+			first_contentful_paint?: CruxMetric;
+			experimental_time_to_first_byte?: CruxMetric;
 		};
 	};
 };
@@ -100,6 +104,8 @@ const parse = (data: CruxResponse, source: "url" | "origin"): CruxResult => {
 		lcp: toNum(metrics.largest_contentful_paint?.percentiles?.p75),
 		inp: toNum(metrics.interaction_to_next_paint?.percentiles?.p75),
 		cls: toNum(metrics.cumulative_layout_shift?.percentiles?.p75),
+		fcp: toNum(metrics.first_contentful_paint?.percentiles?.p75),
+		ttfb: toNum(metrics.experimental_time_to_first_byte?.percentiles?.p75),
 	};
 };
 

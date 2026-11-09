@@ -6,6 +6,8 @@ export type PsiResult = {
 	cls: number | null;
 	tbt: number | null;
 	score: number | null;
+	fcp: number | null;
+	speedIndex: number | null;
 };
 
 type PsiAudit = {
@@ -50,5 +52,7 @@ export const fetchPsi = async (
 		cls: audits["cumulative-layout-shift"]?.numericValue ?? null,
 		tbt: audits["total-blocking-time"]?.numericValue ?? null,
 		score: score == null ? null : Math.round(score * 100),
+		fcp: audits["first-contentful-paint"]?.numericValue ?? null,
+		speedIndex: audits["speed-index"]?.numericValue ?? null,
 	};
 };
