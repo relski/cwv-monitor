@@ -6,7 +6,6 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
-import { ThemeToggle } from "#/components/theme-toggle";
 
 import appCss from "../styles.css?url";
 
@@ -82,12 +81,5 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 }
 
 function RootLayout() {
-	return (
-		<>
-			<ThemeToggle />
-			<main className="max-w-300 my-10 mx-auto p-4">
-				<Outlet />
-			</main>
-		</>
-	);
+	return <Outlet />;
 }

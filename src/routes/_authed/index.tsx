@@ -9,7 +9,7 @@ import { useCheckAll } from "#/hooks/use-check-all";
 import { strategySearchSchema } from "#/lib/strategy";
 import { listSites } from "#/server/sites";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authed/")({
 	validateSearch: strategySearchSchema,
 	loaderDeps: ({ search }) => ({
 		strategy: search.strategy,

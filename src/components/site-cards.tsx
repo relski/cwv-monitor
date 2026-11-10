@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { runKey } from "#/hooks/use-check-all";
+import { displayUrl } from "#/lib/format";
 import type { Strategy } from "#/lib/strategy";
 import type { Metric } from "#/lib/thresholds";
 import type { listSites } from "#/server/sites";
@@ -111,8 +112,9 @@ function SiteCards({
 							params={{ siteId: String(s.id) }}
 							search={{ strategy }}
 							className="font-semibold break-all"
+							title={s.url}
 						>
-							{s.url}
+							<strong>{displayUrl(s.url)}</strong>
 						</Link>
 						<SiteStatus
 							running={running.has(key)}

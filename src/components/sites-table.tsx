@@ -9,6 +9,7 @@ import {
 	TableRow,
 } from "#/components/ui/table";
 import { runKey } from "#/hooks/use-check-all";
+import { displayUrl } from "#/lib/format";
 import type { Strategy } from "#/lib/strategy";
 import type { listSites } from "#/server/sites";
 import { MetricValue } from "./metric-value";
@@ -55,8 +56,9 @@ function SitesTable({
 											to="/sites/$siteId"
 											params={{ siteId: String(s.id) }}
 											search={{ strategy }}
+											title={s.url}
 										>
-											<strong>{s.url}</strong>
+											<strong>{displayUrl(s.url)}</strong>
 										</Link>
 										<SiteStatus
 											running={running.has(key)}
@@ -64,7 +66,9 @@ function SitesTable({
 											latest={s.latest}
 										/>
 									</TableCell>
-									<TableCell colSpan={8}>Not checked on {strategy} yet</TableCell>
+									<TableCell colSpan={8}>
+										Not checked on {strategy} yet
+									</TableCell>
 								</TableRow>
 							);
 						}
@@ -78,8 +82,9 @@ function SitesTable({
 											to="/sites/$siteId"
 											params={{ siteId: String(s.id) }}
 											search={{ strategy }}
+											title={s.url}
 										>
-											<strong>{s.url}</strong>
+											<strong>{displayUrl(s.url)}</strong>
 										</Link>
 										<SiteStatus
 											running={running.has(key)}

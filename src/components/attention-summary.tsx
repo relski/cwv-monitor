@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { type AttentionIssue, getAttentionIssues } from "#/lib/attention";
+import { displayUrl } from "#/lib/format";
 import type { Strategy } from "#/lib/strategy";
 import type { listSites } from "#/server/sites";
 import { MetricValue } from "./metric-value";
@@ -51,8 +52,9 @@ function AttentionSummary({
 								params={{ siteId: String(site.id) }}
 								search={{ strategy }}
 								className="font-semibold break-all"
+								title={site.url}
 							>
-								{site.url}
+								{displayUrl(site.url)}
 							</Link>
 							<div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
 								{issues.map((issue) => (

@@ -26,13 +26,14 @@ import {
 } from "#/components/ui/table";
 import type { checks } from "#/db/schema";
 import type { CruxHistoryResult } from "#/lib/crux";
+import { displayUrl } from "#/lib/format";
 import { strategySearchSchema } from "#/lib/strategy";
 import { type Metric, type Rating, rate, THRESHOLDS } from "#/lib/thresholds";
 import { getSiteHistory } from "#/server/sites";
 
 type Check = typeof checks.$inferSelect;
 
-export const Route = createFileRoute("/sites/$siteId")({
+export const Route = createFileRoute("/_authed/sites/$siteId")({
 	validateSearch: strategySearchSchema,
 	loaderDeps: ({ search }) => ({
 		strategy: search.strategy,
@@ -240,7 +241,9 @@ function SitePage() {
 			<Link to="/" className="text-sm" search={{ strategy }}>
 				← Back
 			</Link>
-			<h1 className="text-2xl my-5">{site.url}</h1>
+			<h1 className="text-2xl my-5" title={site.url}>
+				{displayUrl(site.url)}
+			</h1>
 			<StrategyToggle
 				value={strategy}
 				onChange={(next) =>
