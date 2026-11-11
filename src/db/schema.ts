@@ -10,6 +10,28 @@ import {
 } from "drizzle-orm/pg-core";
 import type { Strategy } from "#/lib/strategy";
 
+export const users = pgTable("users", {
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => crypto.randomUUID()),
+	email: text("email").notNull().unique(),
+	passwordHash: text("password_hash").notNull(),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const sessions = pgTable(
+	"sessions",
+	{
+		id: text("id").primaryKey(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
+		expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+		createdAt: timestamp("created_at").notNull().defaultNow(),
+	},
+	(t) => [index("sessions_user_id_idx").on(t.userId)],
+);
+
 export const sites = pgTable(
 	"sites",
 	{
@@ -58,3 +80,4 @@ export const checks = pgTable(
 );
 
 export type Check = typeof checks.$inferSelect;
+export type User = typeof users.$inferSelect;

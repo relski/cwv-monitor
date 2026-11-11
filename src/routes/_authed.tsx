@@ -30,8 +30,7 @@ function AuthedLayout() {
 								to="/"
 								className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
 								activeProps={{
-									className:
-										"bg-sidebar-accent text-sidebar-accent-foreground",
+									className: "bg-sidebar-accent text-sidebar-accent-foreground",
 									"aria-current": "page",
 								}}
 							>
