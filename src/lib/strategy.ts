@@ -11,7 +11,7 @@ export const strategySchema = z.enum(STRATEGIES);
 // Lenient schema for URL search params: anything missing or invalid falls
 // back to the default. Server functions keep using the strict `strategySchema`.
 export const strategySearchSchema = z.object({
-	strategy: strategySchema.catch(DEFAULT_STRATEGY),
+	strategy: strategySchema.default(DEFAULT_STRATEGY).catch(DEFAULT_STRATEGY),
 });
 
 export type StrategySearch = z.infer<typeof strategySearchSchema>;

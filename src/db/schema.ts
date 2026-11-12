@@ -36,7 +36,9 @@ export const sites = pgTable(
 	"sites",
 	{
 		id: serial("id").primaryKey(),
-		userId: text("user_id").notNull(),
+		userId: text("user_id")
+			.notNull()
+			.references(() => users.id, { onDelete: "cascade" }),
 		url: text("url").notNull(),
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 	},

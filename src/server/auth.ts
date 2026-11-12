@@ -1,4 +1,11 @@
-// Stub: swap for real session lookup when auth is added
+import { getSessionUser } from "./session";
+
 export async function requireUser() {
-	return { id: "local-user" };
+	const user = await getSessionUser();
+
+	if (!user) {
+		throw new Error("Not signed in");
+	}
+
+	return { id: user.id };
 }

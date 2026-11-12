@@ -36,6 +36,13 @@
       "when": 1794309880754,
       "tag": "0004_warm_omega_red",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794480780012,
+      "tag": "0005_unusual_yellow_claw",
+      "breakpoints": true
     }
   ]
 }
