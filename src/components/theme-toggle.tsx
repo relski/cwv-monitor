@@ -1,15 +1,13 @@
+import { applyTheme } from "#/lib/theme";
+
 function ThemeToggle() {
 	return (
 		<button
 			type="button"
 			onClick={() => {
-				const html = document.documentElement;
-				const nowDark = html.classList.toggle("dark");
-				try {
-					localStorage.setItem("theme", nowDark ? "dark" : "light");
-				} catch {
-					("storage unavailable, ignore");
-				}
+				document.documentElement.classList.contains("dark")
+					? applyTheme("light")
+					: applyTheme("dark");
 			}}
 			className="rounded-md border border-border bg-background p-2 text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
 			aria-label="Toggle theme"

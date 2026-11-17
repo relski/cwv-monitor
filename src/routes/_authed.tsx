@@ -4,8 +4,10 @@ import {
 	Outlet,
 	redirect,
 } from "@tanstack/react-router";
+import { User } from "lucide-react";
 import { SignOutButton } from "#/components/sign-out-button";
 import { ThemeToggle } from "#/components/theme-toggle";
+import { Button } from "#/components/ui/button";
 import { getCurrentUser } from "#/server/account";
 
 export const Route = createFileRoute("/_authed")({
@@ -40,12 +42,32 @@ function AuthedLayout() {
 								Overview
 							</Link>
 						</li>
+						<li>
+							<Link
+								to="/sites"
+								className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+								activeProps={{
+									className: "bg-sidebar-accent text-sidebar-accent-foreground",
+									"aria-current": "page",
+								}}
+							>
+								Sites
+							</Link>
+						</li>
 					</ul>
 				</nav>
 				<div className="mt-auto flex flex-col gap-2 px-2 py-4">
-					<p className="truncate text-sm px-3 text-muted-foreground" title={user.email}>
+					<Link
+						to="/settings"
+						title={user.email}
+						className="block truncate rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+						activeProps={{
+							className: "bg-sidebar-accent text-sidebar-accent-foreground",
+							"aria-current": "page",
+						}}
+					>
 						{user.email}
-					</p>
+					</Link>
 					<div className="flex items-center justify-between">
 						<SignOutButton />
 						<ThemeToggle />
@@ -58,6 +80,11 @@ function AuthedLayout() {
 						CWV Monitor
 					</Link>
 					<div className="flex items-center gap-2">
+						<Button asChild variant="ghost" size="icon-sm">
+							<Link to="/settings" aria-label="Account settings">
+								<User />
+							</Link>
+						</Button>
 						<SignOutButton />
 						<ThemeToggle />
 					</div>

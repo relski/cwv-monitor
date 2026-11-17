@@ -40,6 +40,7 @@ export const sites = pgTable(
 			.notNull()
 			.references(() => users.id, { onDelete: "cascade" }),
 		url: text("url").notNull(),
+		name: text("name"),
 		createdAt: timestamp("created_at").notNull().defaultNow(),
 	},
 	(t) => [unique().on(t.userId, t.url)],

@@ -43,6 +43,13 @@
       "when": 1794480780012,
       "tag": "0005_unusual_yellow_claw",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794625472717,
+      "tag": "0006_flowery_harpoon",
+      "breakpoints": true
     }
   ]
 }

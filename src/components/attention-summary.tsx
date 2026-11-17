@@ -1,9 +1,9 @@
 import { Link } from "@tanstack/react-router";
 import { type AttentionIssue, getAttentionIssues } from "#/lib/attention";
-import { displayUrl } from "#/lib/format";
 import type { Strategy } from "#/lib/strategy";
 import type { listSites } from "#/server/sites";
 import { MetricValue } from "./metric-value";
+import { SiteLabel } from "./site-label";
 
 function hasPoor(issues: AttentionIssue[]) {
 	return issues.some((i) => i.rating === "poor");
@@ -54,7 +54,7 @@ function AttentionSummary({
 								className="font-semibold break-all"
 								title={site.url}
 							>
-								{displayUrl(site.url)}
+								<SiteLabel name={site.name} url={site.url} />
 							</Link>
 							<div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
 								{issues.map((issue) => (

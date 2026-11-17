@@ -2,10 +2,15 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestIP } from "@tanstack/react-start/server";
 import { eq } from "drizzle-orm";
 import { db } from "#/db";
-import { users } from "#/db/schema";
-import { loginSchema, registerSchema } from "#/lib/auth-schemas";
+import { sessions, users } from "#/db/schema";
+import {
+	changePasswordSchema,
+	loginSchema,
+	registerSchema,
+} from "#/lib/auth-schemas";
 import { hashPassword, verifyPassword } from "#/lib/password";
 import { createRateLimiter } from "#/lib/rate-limit";
+import { requireUser } from "./auth";
 import { createSession, destroySession, getSessionUser } from "./session";
 
 const INVALID_LOGIN_MESSAGE = "Invalid email or password";
@@ -99,3 +104,37 @@ export const logout = createServerFn({ method: "POST" }).handler(async () => {
 	await destroySession();
 	return { ok: true as const };
 });
+
+export const changePassword = createServerFn({ method: "POST" })
+	.validator(changePasswordSchema)
+	.handler(async ({ data }) => {
+		const user = await requireUser();
+		const key = `change-password|${user.id}`;
+		const attempt = loginLimiter.hit(key);
+
+		if (!attempt.allowed)
+			return {
+				ok: false as const,
+				message: `Too many attempts. Try again in ${Math.ceil(attempt.retryAfterMs / 60000)} minutes.`,
+			};
+
+		const [row] = await db
+			.select()
+			.from(users)
+			.where(eq(users.id, user.id))
+			.limit(1);
+		if (!row) return { ok: false as const, message: "Account not found" };
+		const valid = await verifyPassword(data.currentPassword, row.passwordHash);
+		if (!valid)
+			return { ok: false as const, message: "Current password is incorrect" };
+
+		const newHash = await hashPassword(data.newPassword);
+		await db
+			.update(users)
+			.set({ passwordHash: newHash })
+			.where(eq(users.id, user.id));
+		await db.delete(sessions).where(eq(sessions.userId, user.id));
+		await createSession(user.id);
+		loginLimiter.reset(key);
+		return { ok: true as const };
+	});

@@ -241,9 +241,16 @@ function SitePage() {
 			<Link to="/" className="text-sm" search={{ strategy }}>
 				← Back
 			</Link>
-			<h1 className="text-2xl my-5" title={site.url}>
-				{displayUrl(site.url)}
-			</h1>
+			<div className="my-5">
+				<h1 className="text-2xl" title={site.url}>
+					{site.name ?? displayUrl(site.url)}
+				</h1>
+				{site.name && (
+					<p className="text-sm text-on-surface-variant">
+						displayUrl(site.url)
+					</p>
+				)}
+			</div>
 			<StrategyToggle
 				value={strategy}
 				onChange={(next) =>

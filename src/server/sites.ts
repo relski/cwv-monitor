@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "#/db";
 import { checks, sites } from "#/db/schema";
 import { type CruxHistoryResult, fetchCruxHistory } from "#/lib/crux";
+import { siteNameSchema } from "#/lib/site-schemas";
 import { strategySchema } from "#/lib/strategy";
 import { requireUser } from "./auth";
 
@@ -48,14 +49,53 @@ export const listSites = createServerFn({ method: "GET" })
 	});
 
 export const addSite = createServerFn({ method: "POST" })
-	.validator(z.object({ url: z.string().url() }))
+	.validator(
+		z.object({
+			url: z.string().url(),
+			name: siteNameSchema.optional(),
+		}),
+	)
 	.handler(async ({ data }) => {
 		const user = await requireUser();
 		const url = new URL(data.url).toString();
 		await db
 			.insert(sites)
-			.values({ userId: user.id, url })
+			.values({ userId: user.id, url, name: data.name ?? null })
 			.onConflictDoNothing();
+		return { ok: true };
+	});
+
+export const renameSite = createServerFn({ method: "POST" })
+	.validator(
+		z.object({
+			siteId: z.number(),
+			name: siteNameSchema,
+		}),
+	)
+	.handler(async ({ data }) => {
+		const user = await requireUser();
+		const [site] = await db
+			.update(sites)
+			.set({ name: data.name })
+			.where(and(eq(sites.id, data.siteId), eq(sites.userId, user.id)))
+			.returning({ id: sites.id });
+
+		if (!site) throw new Error("Site not found");
+
+		return { ok: true };
+	});
+
+export const deleteSite = createServerFn({ method: "POST" })
+	.validator(z.object({ siteId: z.number() }))
+	.handler(async ({ data }) => {
+		const user = await requireUser();
+		const [site] = await db
+			.delete(sites)
+			.where(and(eq(sites.id, data.siteId), eq(sites.userId, user.id)))
+			.returning({ id: sites.id });
+
+		if (!site) throw new Error("Site not found");
+
 		return { ok: true };
 	});
 
@@ -88,7 +128,7 @@ export const getSiteHistory = createServerFn({ method: "GET" })
 			cruxHistory = null;
 			cruxHistoryFailed = true;
 			console.error(
-				`CrUX history failed for site {site.id} ({strategy})`,
+				`CrUX history failed for site ${site.id} (${data.strategy})`,
 				error,
 			);
 		}

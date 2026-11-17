@@ -12,11 +12,12 @@ function AddSiteForm() {
 	const form = useForm({
 		defaultValues: {
 			url: "",
+			name: "",
 		},
 		onSubmit: async ({ value }) => {
 			setError("");
 			try {
-				await addSite({ data: { url: value.url } });
+				await addSite({ data: { url: value.url, name: value.name } });
 				form.reset();
 				router.invalidate();
 			} catch {
@@ -36,38 +37,55 @@ function AddSiteForm() {
 				className="my-5"
 			>
 				<FieldGroup>
-					<form.Field
-						name="url"
-						validators={{
-							onChange: ({ value }) =>
-								value && !/^https?:\/\/.+/.test(value)
-									? "Enter a valid URL"
-									: undefined,
-						}}
-					>
-						{(field) => (
-							<Field orientation="horizontal" className="flex flex-wrap">
-								<Input
-									id={field.name}
-									name={field.name}
-									type="url"
-									value={field.state.value}
-									onBlur={field.handleBlur}
-									onChange={(e) => field.handleChange(e.target.value)}
-									placeholder="https://example.com"
-									className="flex-1"
-								/>
-								<Button type="submit">Add</Button>
-								{field.state.meta.errors.length > 0 && (
-									<FieldError
-										errors={field.state.meta.errors.map((err) => ({
-											message: String(err),
-										}))}
+					<div className="flex flex-wrap items-start gap-2">
+						<form.Field
+							name="url"
+							validators={{
+								onChange: ({ value }) =>
+									value && !/^https?:\/\/.+/.test(value)
+										? "Enter a valid URL"
+										: undefined,
+							}}
+						>
+							{(field) => (
+								<Field className="flex-1 min-w-48">
+									<Input
+										id={field.name}
+										name={field.name}
+										type="url"
+										value={field.state.value}
+										onBlur={field.handleBlur}
+										onChange={(e) => field.handleChange(e.target.value)}
+										placeholder="https://example.com"
 									/>
-								)}
-							</Field>
-						)}
-					</form.Field>
+
+									{field.state.meta.errors.length > 0 && (
+										<FieldError
+											errors={field.state.meta.errors.map((err) => ({
+												message: String(err),
+											}))}
+										/>
+									)}
+								</Field>
+							)}
+						</form.Field>
+						<form.Field name="name">
+							{(field) => (
+								<Field className="flex-1 min-w-48">
+									<Input
+										id={field.name}
+										name={field.name}
+										value={field.state.value}
+										onBlur={field.handleBlur}
+										onChange={(e) => field.handleChange(e.target.value)}
+										placeholder="Name (optional)"
+										maxLength={60}
+									/>
+								</Field>
+							)}
+						</form.Field>
+						<Button type="submit">Add</Button>
+					</div>
 				</FieldGroup>
 			</form>
 			{error && <p className="text-destructive">{error}</p>}

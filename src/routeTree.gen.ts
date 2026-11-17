@@ -13,6 +13,8 @@ import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
+import { Route as AuthedSitesIndexRouteImport } from './routes/_authed/sites.index'
 import { Route as AuthedSitesSiteIdRouteImport } from './routes/_authed/sites.$siteId'
 
 const AuthedRoute = AuthedRouteImport.update({
@@ -34,6 +36,16 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedSitesIndexRoute = AuthedSitesIndexRouteImport.update({
+  id: '/sites/',
+  path: '/sites/',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedSitesSiteIdRoute = AuthedSitesSiteIdRouteImport.update({
   id: '/sites/$siteId',
   path: '/sites/$siteId',
@@ -44,34 +56,43 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof AuthedSettingsRoute
   '/sites/$siteId': typeof AuthedSitesSiteIdRoute
+  '/sites/': typeof AuthedSitesIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/settings': typeof AuthedSettingsRoute
   '/': typeof AuthedIndexRoute
   '/sites/$siteId': typeof AuthedSitesSiteIdRoute
+  '/sites': typeof AuthedSitesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/_authed/settings': typeof AuthedSettingsRoute
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/sites/$siteId': typeof AuthedSitesSiteIdRoute
+  '/_authed/sites/': typeof AuthedSitesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/register' | '/sites/$siteId'
+  fullPaths:
+    '/' | '/login' | '/register' | '/settings' | '/sites/$siteId' | '/sites/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/register' | '/' | '/sites/$siteId'
+  to: '/login' | '/register' | '/settings' | '/' | '/sites/$siteId' | '/sites'
   id:
     | '__root__'
     | '/_authed'
     | '/login'
     | '/register'
+    | '/_authed/settings'
     | '/_authed/'
     | '/_authed/sites/$siteId'
+    | '/_authed/sites/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -110,6 +131,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/settings': {
+      id: '/_authed/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthedSettingsRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/sites/': {
+      id: '/_authed/sites/'
+      path: '/sites'
+      fullPath: '/sites/'
+      preLoaderRoute: typeof AuthedSitesIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/sites/$siteId': {
       id: '/_authed/sites/$siteId'
       path: '/sites/$siteId'
@@ -121,13 +156,17 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedRouteChildren {
+  AuthedSettingsRoute: typeof AuthedSettingsRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedSitesSiteIdRoute: typeof AuthedSitesSiteIdRoute
+  AuthedSitesIndexRoute: typeof AuthedSitesIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedIndexRoute: AuthedIndexRoute,
   AuthedSitesSiteIdRoute: AuthedSitesSiteIdRoute,
+  AuthedSitesIndexRoute: AuthedSitesIndexRoute,
 }
 
 const AuthedRouteWithChildren =

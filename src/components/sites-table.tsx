@@ -9,10 +9,10 @@ import {
 	TableRow,
 } from "#/components/ui/table";
 import { runKey } from "#/hooks/use-check-all";
-import { displayUrl } from "#/lib/format";
 import type { Strategy } from "#/lib/strategy";
 import type { listSites } from "#/server/sites";
 import { MetricValue } from "./metric-value";
+import { SiteLabel } from "./site-label";
 import { SiteStatus } from "./site-status";
 import { SourceIcon } from "./source-icon";
 
@@ -58,7 +58,7 @@ function SitesTable({
 											search={{ strategy }}
 											title={s.url}
 										>
-											<strong>{displayUrl(s.url)}</strong>
+											<SiteLabel name={s.name} url={s.url} />
 										</Link>
 										<SiteStatus
 											running={running.has(key)}
@@ -84,7 +84,7 @@ function SitesTable({
 											search={{ strategy }}
 											title={s.url}
 										>
-											<strong>{displayUrl(s.url)}</strong>
+											<SiteLabel name={s.name} url={s.url} />
 										</Link>
 										<SiteStatus
 											running={running.has(key)}
