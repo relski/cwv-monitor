@@ -3,8 +3,15 @@ import {
 	Link,
 	Outlet,
 	redirect,
+	useSearch,
 } from "@tanstack/react-router";
-import { User } from "lucide-react";
+import {
+	Binoculars,
+	FlaskConical,
+	Globe,
+	LayoutDashboard,
+	User,
+} from "lucide-react";
 import { SignOutButton } from "#/components/sign-out-button";
 import { ThemeToggle } from "#/components/theme-toggle";
 import { Button } from "#/components/ui/button";
@@ -21,6 +28,7 @@ export const Route = createFileRoute("/_authed")({
 
 function AuthedLayout() {
 	const { user } = Route.useRouteContext();
+	const { strategy } = useSearch({ strict: false });
 
 	return (
 		<div className="min-h-screen md:flex">
@@ -40,6 +48,36 @@ function AuthedLayout() {
 								}}
 							>
 								Overview
+							</Link>
+						</li>
+						<li>
+							<Link
+								to="/field"
+								className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+								activeProps={{
+									className: "bg-sidebar-accent text-sidebar-accent-foreground",
+									"aria-current": "page",
+								}}
+								search={{ strategy }}
+								activeOptions={{ includeSearch: false }}
+							>
+								<Binoculars className="size-4" />
+								Field data
+							</Link>
+						</li>
+						<li>
+							<Link
+								to="/lab"
+								className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+								activeProps={{
+									className: "bg-sidebar-accent text-sidebar-accent-foreground",
+									"aria-current": "page",
+								}}
+								search={{ strategy }}
+								activeOptions={{ includeSearch: false }}
+							>
+								<FlaskConical className="size-4" />
+								Lab data
 							</Link>
 						</li>
 						<li>
@@ -89,9 +127,72 @@ function AuthedLayout() {
 						<ThemeToggle />
 					</div>
 				</header>
-				<main className="max-w-300 mx-auto p-4">
+				<main className="max-w-300 mx-auto p-4 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-4">
 					<Outlet />
 				</main>
+				<nav
+					aria-label="Main"
+					className="fixed inset-x-0 bottom-0 md:hidden bg-sidebar border-t border-sidebar-border z-30 pb-[env(safe-area-inset-bottom)]"
+				>
+					<ul className="grid grid-cols-4">
+						<li>
+							<Link
+								to="/"
+								aria-label="Overview"
+								className="flex flex-col items-center gap-1 py-2 text-xs font-medium"
+								activeProps={{
+									className: "bg-sidebar-accent text-sidebar-accent-foreground",
+									"aria-current": "page",
+								}}
+							>
+								<LayoutDashboard className="size-5" />
+							</Link>
+						</li>
+						<li>
+							<Link
+								to="/field"
+								aria-label="Field"
+								className="flex flex-col items-center gap-1 py-2 text-xs font-medium"
+								activeProps={{
+									className: "bg-sidebar-accent text-sidebar-accent-foreground",
+									"aria-current": "page",
+								}}
+								search={{ strategy }}
+								activeOptions={{ includeSearch: false }}
+							>
+								<Binoculars className="size-5" />
+							</Link>
+						</li>
+						<li>
+							<Link
+								to="/lab"
+								aria-label="Lab"
+								className="flex flex-col items-center gap-1 py-2 text-xs font-medium"
+								activeProps={{
+									className: "bg-sidebar-accent text-sidebar-accent-foreground",
+									"aria-current": "page",
+								}}
+								search={{ strategy }}
+								activeOptions={{ includeSearch: false }}
+							>
+								<FlaskConical className="size-5" />
+							</Link>
+						</li>
+						<li>
+							<Link
+								to="/sites"
+								aria-label="Sites"
+								className="flex flex-col items-center gap-1 py-2 text-xs font-medium"
+								activeProps={{
+									className: "bg-sidebar-accent text-sidebar-accent-foreground",
+									"aria-current": "page",
+								}}
+							>
+								<Globe className="size-5" />
+							</Link>
+						</li>
+					</ul>
+				</nav>
 			</div>
 		</div>
 	);

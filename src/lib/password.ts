@@ -1,7 +1,11 @@
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 
-const scryptAsync = promisify(scrypt);
+const scryptAsync = promisify(scrypt) as (
+	password: string,
+	salt: Buffer,
+	keylen: number,
+) => Promise<Buffer>;
 const KEY_LENGTH = 64;
 const SALT_LENGTH = 16;
 

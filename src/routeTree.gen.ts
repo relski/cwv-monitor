@@ -13,6 +13,8 @@ import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthedIndexRouteImport } from './routes/_authed/index'
+import { Route as AuthedFieldRouteImport } from './routes/_authed/field'
+import { Route as AuthedLabRouteImport } from './routes/_authed/lab'
 import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedSitesIndexRouteImport } from './routes/_authed/sites.index'
 import { Route as AuthedSitesSiteIdRouteImport } from './routes/_authed/sites.$siteId'
@@ -36,6 +38,16 @@ const AuthedIndexRoute = AuthedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const AuthedFieldRoute = AuthedFieldRouteImport.update({
+  id: '/field',
+  path: '/field',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedLabRoute = AuthedLabRouteImport.update({
+  id: '/lab',
+  path: '/lab',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedSettingsRoute = AuthedSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -56,6 +68,8 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthedIndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/field': typeof AuthedFieldRoute
+  '/lab': typeof AuthedLabRoute
   '/settings': typeof AuthedSettingsRoute
   '/sites/$siteId': typeof AuthedSitesSiteIdRoute
   '/sites/': typeof AuthedSitesIndexRoute
@@ -63,6 +77,8 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/field': typeof AuthedFieldRoute
+  '/lab': typeof AuthedLabRoute
   '/settings': typeof AuthedSettingsRoute
   '/': typeof AuthedIndexRoute
   '/sites/$siteId': typeof AuthedSitesSiteIdRoute
@@ -73,6 +89,8 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/_authed/field': typeof AuthedFieldRoute
+  '/_authed/lab': typeof AuthedLabRoute
   '/_authed/settings': typeof AuthedSettingsRoute
   '/_authed/': typeof AuthedIndexRoute
   '/_authed/sites/$siteId': typeof AuthedSitesSiteIdRoute
@@ -81,14 +99,31 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/login' | '/register' | '/settings' | '/sites/$siteId' | '/sites/'
+    | '/'
+    | '/login'
+    | '/register'
+    | '/field'
+    | '/lab'
+    | '/settings'
+    | '/sites/$siteId'
+    | '/sites/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/register' | '/settings' | '/' | '/sites/$siteId' | '/sites'
+  to:
+    | '/login'
+    | '/register'
+    | '/field'
+    | '/lab'
+    | '/settings'
+    | '/'
+    | '/sites/$siteId'
+    | '/sites'
   id:
     | '__root__'
     | '/_authed'
     | '/login'
     | '/register'
+    | '/_authed/field'
+    | '/_authed/lab'
     | '/_authed/settings'
     | '/_authed/'
     | '/_authed/sites/$siteId'
@@ -131,6 +166,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
+    '/_authed/field': {
+      id: '/_authed/field'
+      path: '/field'
+      fullPath: '/field'
+      preLoaderRoute: typeof AuthedFieldRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/lab': {
+      id: '/_authed/lab'
+      path: '/lab'
+      fullPath: '/lab'
+      preLoaderRoute: typeof AuthedLabRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/settings': {
       id: '/_authed/settings'
       path: '/settings'
@@ -156,6 +205,8 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthedRouteChildren {
+  AuthedFieldRoute: typeof AuthedFieldRoute
+  AuthedLabRoute: typeof AuthedLabRoute
   AuthedSettingsRoute: typeof AuthedSettingsRoute
   AuthedIndexRoute: typeof AuthedIndexRoute
   AuthedSitesSiteIdRoute: typeof AuthedSitesSiteIdRoute
@@ -163,6 +214,8 @@ interface AuthedRouteChildren {
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedFieldRoute: AuthedFieldRoute,
+  AuthedLabRoute: AuthedLabRoute,
   AuthedSettingsRoute: AuthedSettingsRoute,
   AuthedIndexRoute: AuthedIndexRoute,
   AuthedSitesSiteIdRoute: AuthedSitesSiteIdRoute,

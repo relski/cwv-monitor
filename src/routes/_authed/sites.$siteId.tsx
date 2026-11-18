@@ -247,7 +247,7 @@ function SitePage() {
 				</h1>
 				{site.name && (
 					<p className="text-sm text-on-surface-variant">
-						displayUrl(site.url)
+						{displayUrl(site.url)}
 					</p>
 				)}
 			</div>
