@@ -18,6 +18,44 @@ export function useCheckAll(sites: { id: number }[], strategy: Strategy) {
 	const [checkErrors, setCheckErrors] = useState<Record<string, string>>({});
 	const ref = useRef(false);
 
+	// Runs one check, then refreshes the list.
+	// The caller adds the key to `running` and clears the old error first;
+	// this function removes the key from `running` when it is done, whatever happens.
+	async function checkSite(siteId: number, runStrategy: Strategy) {
+		const key = runKey(siteId, runStrategy);
+		// tells the catch block which step failed
+		let refreshing = false;
+
+		try {
+			await runCheck({ data: { siteId, strategy: runStrategy } });
+			refreshing = true;
+			await router.invalidate();
+		} catch (e) {
+			let message: string;
+
+			if (refreshing) {
+				// Keep refresh failures distinct from check failures.
+				message =
+					e instanceof Error
+						? `Check succeeded, but refreshing results failed: ${e.message}`
+						: "Check succeeded, but refreshing results failed";
+			} else {
+				message = e instanceof Error ? e.message : "Check failed";
+			}
+
+			setCheckErrors((previous) => ({
+				...previous,
+				[key]: message,
+			}));
+		} finally {
+			setRunning((previous) => {
+				const next = new Set(previous);
+				next.delete(key);
+				return next;
+			});
+		}
+	}
+
 	async function onCheckAll() {
 		if (sites.length === 0 || ref.current) return;
 		ref.current = true;
@@ -44,52 +82,8 @@ export function useCheckAll(sites: { id: number }[], strategy: Strategy) {
 			return next;
 		});
 
-		const worker = async (site: (typeof runSites)[number]) => {
-			const key = runKey(site.id, runStrategy);
-
-			try {
-				try {
-					await runCheck({ data: { siteId: site.id, strategy: runStrategy } });
-				} catch (e) {
-					const message = e instanceof Error ? e.message : "Check failed";
-
-					setCheckErrors((previous) => ({
-						...previous,
-						[key]: message,
-					}));
-
-					return;
-				}
-
-				// The check succeeded, so remove any previous check error.
-				setCheckErrors((previous) => {
-					const next = { ...previous };
-					delete next[key];
-					return next;
-				});
-
-				try {
-					await router.invalidate();
-				} catch (e) {
-					// Keep refresh failures distinct from check failures.
-					const message =
-						e instanceof Error
-							? `Check succeeded, but refreshing results failed: ${e.message}`
-							: "Check succeeded, but refreshing results failed";
-
-					setCheckErrors((previous) => ({
-						...previous,
-						[key]: message,
-					}));
-				}
-			} finally {
-				setRunning((previous) => {
-					const next = new Set(previous);
-					next.delete(key);
-					return next;
-				});
-			}
-		};
+		const worker = (site: (typeof runSites)[number]) =>
+			checkSite(site.id, runStrategy);
 
 		try {
 			await runQueued(runSites, worker, {
@@ -102,5 +96,20 @@ export function useCheckAll(sites: { id: number }[], strategy: Strategy) {
 		}
 	}
 
-	return { onCheckAll, checkingAll, running, checkErrors };
+	async function onCheckSite(siteId: number) {
+		const key = runKey(siteId, strategy);
+		// a check for this site is already running
+		if (running.has(key)) return;
+
+		setRunning((previous) => new Set(previous).add(key));
+		setCheckErrors((previous) => {
+			const next = { ...previous };
+			delete next[key];
+			return next;
+		});
+
+		await checkSite(siteId, strategy);
+	}
+
+	return { onCheckAll, onCheckSite, checkingAll, running, checkErrors };
 }

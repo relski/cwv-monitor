@@ -26,7 +26,7 @@ import {
 } from "#/components/ui/table";
 import type { checks } from "#/db/schema";
 import type { CruxHistoryResult } from "#/lib/crux";
-import { displayUrl } from "#/lib/format";
+import { displayUrl, sourceLabels } from "#/lib/format";
 import { strategySearchSchema } from "#/lib/strategy";
 import { type Metric, type Rating, rate, THRESHOLDS } from "#/lib/thresholds";
 import { getSiteHistory } from "#/server/sites";
@@ -47,11 +47,6 @@ export const Route = createFileRoute("/_authed/sites/$siteId")({
 		}),
 	component: SitePage,
 });
-
-const sourceLabels = {
-	url: "this page",
-	origin: "site-wide",
-} as const;
 
 function FieldHistoryTable({ history }: { history: Check[] }) {
 	return (

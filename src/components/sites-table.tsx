@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Fragment } from "react";
+import { Button } from "#/components/ui/button";
 import {
 	Table,
 	TableBody,
@@ -9,23 +10,52 @@ import {
 	TableRow,
 } from "#/components/ui/table";
 import { runKey } from "#/hooks/use-check-all";
+import { displayUrl } from "#/lib/format";
 import type { Strategy } from "#/lib/strategy";
 import type { listSites } from "#/server/sites";
+import { CheckedAt } from "./checked-at";
 import { MetricValue } from "./metric-value";
 import { SiteLabel } from "./site-label";
 import { SiteStatus } from "./site-status";
 import { SourceIcon } from "./source-icon";
+
+function RecheckButton({
+	label,
+	siteName,
+	disabled,
+	onClick,
+}: {
+	label: string;
+	siteName: string;
+	disabled: boolean;
+	onClick: () => void;
+}) {
+	return (
+		<Button
+			type="button"
+			variant="outline"
+			size="sm"
+			disabled={disabled}
+			aria-label={`${label} ${siteName}`}
+			onClick={onClick}
+		>
+			{label}
+		</Button>
+	);
+}
 
 function SitesTable({
 	sites,
 	strategy,
 	running,
 	checkErrors,
+	onRecheck,
 }: {
 	sites: Awaited<ReturnType<typeof listSites>>;
 	strategy: Strategy;
 	running: Set<string>;
 	checkErrors: Record<string, string>;
+	onRecheck: (siteId: number) => void;
 }) {
 	return (
 		<div className="rounded-lg border border-outline-variant bg-card overflow-hidden hidden md:block">
@@ -41,6 +71,9 @@ function SitesTable({
 						<TableHead>TTFB / Speed Index</TableHead>
 						<TableHead>Score</TableHead>
 						<TableHead>Last Checked</TableHead>
+						<TableHead>
+							<span className="sr-only">Actions</span>
+						</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -68,6 +101,14 @@ function SitesTable({
 									</TableCell>
 									<TableCell colSpan={8}>
 										Not checked on {strategy} yet
+									</TableCell>
+									<TableCell>
+										<RecheckButton
+											label="Recheck"
+											siteName={s.name ?? displayUrl(s.url)}
+											disabled={running.has(key)}
+											onClick={() => onRecheck(s.id)}
+										/>
 									</TableCell>
 								</TableRow>
 							);
@@ -127,7 +168,18 @@ function SitesTable({
 									</TableCell>
 									<TableCell></TableCell>
 									<TableCell rowSpan={2}>
-										{new Date(s.latest.createdAt).toLocaleString()}
+										<CheckedAt
+											date={s.latest.createdAt}
+											fieldSource={s.latest.fieldSource}
+										/>
+									</TableCell>
+									<TableCell rowSpan={2}>
+										<RecheckButton
+											label="Recheck"
+											siteName={s.name ?? displayUrl(s.url)}
+											disabled={running.has(key)}
+											onClick={() => onRecheck(s.id)}
+										/>
 									</TableCell>
 								</TableRow>
 								{/* Lab Row */}

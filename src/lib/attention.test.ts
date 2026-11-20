@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { getAttentionIssues } from "./attention";
+import {
+	countSitesByCheckStatus,
+	getAttentionIssues,
+	hasFieldData,
+} from "./attention";
 
 type Latest = NonNullable<Parameters<typeof getAttentionIssues>[0]>;
 
@@ -63,5 +67,105 @@ describe("getAttentionIssues", () => {
 		expect(
 			getAttentionIssues(latest({ fieldLcp: null, fieldInp: 350 })),
 		).toEqual([{ metric: "inp", rating: "needs-improvement", value: 350 }]);
+	});
+});
+
+describe("hasFieldData", () => {
+	it("is false when all three vitals have no data", () => {
+		expect(hasFieldData(latest())).toBe(false);
+	});
+
+	it("is true when only one vital has a value", () => {
+		expect(hasFieldData(latest({ fieldInp: 150 }))).toBe(true);
+	});
+
+	it("treats a CLS of 0 as data", () => {
+		expect(hasFieldData(latest({ fieldCls: 0 }))).toBe(true);
+	});
+});
+
+// a site as listSites returns it, reduced to the part the counter reads
+const site = (latestCheck: Latest | null) => ({ latest: latestCheck });
+
+describe("countSitesByCheckStatus", () => {
+	it("returns zeros for an empty list", () => {
+		expect(countSitesByCheckStatus([])).toEqual({
+			passing: 0,
+			checked: 0,
+			notChecked: 0,
+		});
+	});
+
+	it("counts sites without a check as not checked", () => {
+		expect(countSitesByCheckStatus([site(null), site(null)])).toEqual({
+			passing: 0,
+			checked: 0,
+			notChecked: 2,
+		});
+	});
+
+	it("counts a site with all good vitals as passing", () => {
+		expect(
+			countSitesByCheckStatus([
+				site(latest({ fieldLcp: 1800, fieldInp: 150, fieldCls: 0.05 })),
+			]),
+		).toEqual({ passing: 1, checked: 1, notChecked: 0 });
+	});
+
+	it("does not count a site with a poor vital as passing", () => {
+		expect(countSitesByCheckStatus([site(latest({ fieldLcp: 5000 }))])).toEqual(
+			{ passing: 0, checked: 1, notChecked: 0 },
+		);
+	});
+
+	it("does not count a site with a needs-improvement vital as passing", () => {
+		expect(countSitesByCheckStatus([site(latest({ fieldInp: 350 }))])).toEqual({
+			passing: 0,
+			checked: 1,
+			notChecked: 0,
+		});
+	});
+
+	it("counts a checked site with no field data as checked, not passing", () => {
+		expect(countSitesByCheckStatus([site(latest())])).toEqual({
+			passing: 0,
+			checked: 1,
+			notChecked: 0,
+		});
+	});
+
+	it("counts a CLS of 0 with good LCP and INP as passing", () => {
+		expect(
+			countSitesByCheckStatus([
+				site(latest({ fieldLcp: 1800, fieldInp: 150, fieldCls: 0 })),
+			]),
+		).toEqual({ passing: 1, checked: 1, notChecked: 0 });
+	});
+
+	it("counts a value exactly on the good limit as passing", () => {
+		expect(countSitesByCheckStatus([site(latest({ fieldLcp: 2500 }))])).toEqual(
+			{ passing: 1, checked: 1, notChecked: 0 },
+		);
+	});
+
+	it("counts a site with data for only some vitals as passing when none is flagged", () => {
+		expect(countSitesByCheckStatus([site(latest({ fieldLcp: 1800 }))])).toEqual(
+			{ passing: 1, checked: 1, notChecked: 0 },
+		);
+	});
+
+	it("adds up a mixed list", () => {
+		const sites = [
+			site(latest({ fieldLcp: 1800, fieldInp: 150, fieldCls: 0.05 })),
+			site(latest({ fieldLcp: 5000 })),
+			site(latest()),
+			site(null),
+			site(null),
+		];
+
+		const counts = countSitesByCheckStatus(sites);
+
+		expect(counts).toEqual({ passing: 1, checked: 3, notChecked: 2 });
+		expect(counts.checked + counts.notChecked).toBe(sites.length);
 	});
 });

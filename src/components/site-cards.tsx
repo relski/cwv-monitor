@@ -1,8 +1,12 @@
 import { Link } from "@tanstack/react-router";
+import { RefreshCw } from "lucide-react";
+import { Button } from "#/components/ui/button";
 import { runKey } from "#/hooks/use-check-all";
+import { displayUrl } from "#/lib/format";
 import type { Strategy } from "#/lib/strategy";
 import type { Metric } from "#/lib/thresholds";
 import type { listSites } from "#/server/sites";
+import { CheckedAt } from "./checked-at";
 import { MetricValue } from "./metric-value";
 import { SiteLabel } from "./site-label";
 import { SiteStatus } from "./site-status";
@@ -61,18 +65,22 @@ function SiteCards({
 	strategy,
 	running,
 	checkErrors,
+	onRecheck,
 }: {
 	sites: Awaited<ReturnType<typeof listSites>>;
 	strategy: Strategy;
 	running: Set<string>;
 	checkErrors: Record<string, string>;
+	onRecheck: (siteId: number) => void;
 }) {
 	return (
 		<ul className="md:hidden flex flex-col gap-4">
 			{sites.map((s) => {
 				const key = runKey(s.id, strategy);
 				const checkError = checkErrors[key];
+				const isRunning = running.has(key);
 				const latest = s.latest;
+				const siteName = s.name ?? displayUrl(s.url);
 				const fieldItems: {
 					label: string;
 					metric: Metric;
@@ -107,17 +115,32 @@ function SiteCards({
 						key={s.id}
 						className="rounded-lg border border-outline-variant bg-card p-4 flex flex-col gap-3"
 					>
-						<Link
-							to="/sites/$siteId"
-							params={{ siteId: String(s.id) }}
-							search={{ strategy }}
-							className="font-semibold break-all"
-							title={s.url}
-						>
-							<SiteLabel name={s.name} url={s.url} />
-						</Link>
+						<div className="flex items-start justify-between gap-2">
+							<Link
+								to="/sites/$siteId"
+								params={{ siteId: String(s.id) }}
+								search={{ strategy }}
+								className="font-semibold break-all"
+								title={s.url}
+							>
+								<SiteLabel name={s.name} url={s.url} />
+							</Link>
+							<Button
+								type="button"
+								variant="ghost"
+								size="icon-sm"
+								disabled={isRunning}
+								aria-label={`${latest ? "Recheck" : "Check"} ${siteName}`}
+								onClick={() => onRecheck(s.id)}
+							>
+								<RefreshCw
+									aria-hidden="true"
+									className={isRunning ? "motion-safe:animate-spin" : undefined}
+								/>
+							</Button>
+						</div>
 						<SiteStatus
-							running={running.has(key)}
+							running={isRunning}
 							error={checkError}
 							latest={latest}
 						/>
@@ -126,7 +149,11 @@ function SiteCards({
 								<Section source="field" items={fieldItems} />
 								<Section source="lab" items={labItems} />
 								<p className="text-xs text-on-surface-variant">
-									Checked {new Date(latest.createdAt).toLocaleString()}
+									Checked{" "}
+									<CheckedAt
+										date={latest.createdAt}
+										fieldSource={latest.fieldSource}
+									/>
 								</p>
 							</>
 						) : (
